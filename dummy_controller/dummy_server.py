@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import socket
+import time
 
 host = ""
 port = 12345
@@ -14,6 +15,7 @@ conn, addr = s.accept()
 print 'Connected by', addr
 
 for i in range(5):
+	time.sleep(1)
 	conn.send("I 10 10 999.9 1 2 1 2 3.3 ;")
 	conn.send("T 3450 aL -234.040 811.100 47.5 8.450 b -220.000 750.000 12.000 m -240.000 812.000 90.0 9.100 ;")
 	conn.send("S 0 ;")

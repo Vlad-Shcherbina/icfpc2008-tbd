@@ -2,6 +2,7 @@
 
 import sys
 import socket
+import errno
 import re
 import new
 
@@ -124,6 +125,7 @@ def initConnection():
 
 	s.connect((ip,port))
 	
+	s.setblocking(0)
 	s.settimeout(0)
 
 	buf = ""
@@ -136,8 +138,9 @@ def update():
 		received = s.recv(1024)
 		buf += received
 
-	except socket.timeout:
-		pass
+	except socket.error,e:
+		if e[0] not in [11,errno.EWOULDBLOCK]:
+			raise
 	while True:
 		m = re.search(";",buf)
 		if m:
@@ -149,10 +152,14 @@ def update():
 
 def sendCommand(command):
 	while True:
-		n = s.send(command)
-		command = command[n:]
-		if command == "":
-			break
+		try:
+			n = s.send(command)
+			command = command[n:]
+			if command == "":
+				break
+		except socket.error,e:
+			if e[0] not in [11,errno.EWOULDBLOCK]:
+				raise
 
 
 ##################3
