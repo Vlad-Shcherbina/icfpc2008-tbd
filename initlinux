@@ -1,0 +1,4 @@
+#/bin/bash
+sudo bash -c "echo -e \"127.0.0.1 Knoppix\n127.0.0.1 localhost\" > /etc/hosts"
+sudo chmod 777 /mnt/hda1
+
