@@ -26,11 +26,19 @@ martianRE = r"m (?P<x>%s) (?P<y>%s) (?P<dir>%s) (?P<speed>%s) " % \
 eventRE = r"(?P<tag>[BCKS]) (?P<timeStamp>%s) ;$"%floatRE
 endOfRunRE = r"E (?P<time>%s) (?P<score>%s) ;$"%(floatRE,floatRE,)
 
+def convertFloats(obj,fields):
+	for f in fields:
+		setattr(obj,f,float(getattr(obj,f)))
+
 class InitData(object):
 	def __init__(self,command):
 		m = re.match(initRE,command)
 		assert m
 		self.__dict__ = m.groupdict()
+		convertFloats(self,[
+			"dx","dy","timeLimit",
+			"minSensor","maxSensor",
+			"maxSpeed","maxTurn","maxHardTurn"])
 
 
 class StaticObject(object):
@@ -48,31 +56,38 @@ class Telemetry(object):
 		self.objects = []
 		while objs!="":
 			if objs[0] == "m":
-				print repr(objs)
 				obj = Martian()
 				m = re.match(martianRE,objs)
 				assert m
 				obj.__dict__ = m.groupdict()
+				convertFloats(obj,["x","y","dir","speed"])
 				self.objects.append(obj)
 			else:
 				obj = StaticObject()
 				m = re.match(staticObjectRE,objs)
 				assert m
 				obj.__dict__ = m.groupdict()
+				convertFloats(obj,["x","y","radius"])
 				self.objects.append(obj)
 			objs = objs[m.end():]
+
+		convertFloats(self,[
+			"timeStamp","vehicleX","vehicleY","vehicleDir","vehicleSpeed"])
 
 class Event(object):
 	def __init__(self,command):
 		m = re.match(eventRE,command)
 		assert m
 		self.__dict__ = m.groupdict()
+		convertFloats(self,["timeStamp"])
 
-class EnfOfRun(object):
+class EndOfRun(object):
 	def __init__(self,command):
 		m = re.match(endOfRunRE,command)
 		assert m
 		self.__dict__ = m.groupdict()
+		convertFloats(self,[
+			"time","score"])
 
 eventTypes = {
 	"I": InitData,
@@ -81,10 +96,8 @@ eventTypes = {
 	"C": Event,
 	"K": Event,
 	"S": Event,
-	"E": EnfOfRun,
+	"E": EndOfRun,
 }
-
-
 
 ###########
 # networking tools
@@ -116,7 +129,9 @@ def initConnection():
 def update():
 	global buf
 	try:
-		buf += s.recv(1024)
+		received = s.recv(1024)
+		buf += received
+
 	except socket.timeout:
 		pass
 	while True:
@@ -128,23 +143,19 @@ def update():
 		else:
 			return
 
-		
-
 ##################3
 # main
 
 initConnection()
 
 while True:
-	if messages!= []:
-		print messages[0]
-	messages = messages[1:]
+	while messages != []:
+		message = messages.pop(0)
+		# message handling routine
+		print message.__dict__
+		if isinstance(message,EndOfRun):
+			print "Run ended with score",message.score
+			exit(0)
 	update()
 	
-
-
-#print InitData(i).__dict__
-#print Telemetry(t).__dict__
-
-
-#s.close()
+s.close()
