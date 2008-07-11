@@ -3,6 +3,8 @@ import socket
 import re
 import new
 
+maxRuns = 5
+
 
 ################
 # parsing tools
@@ -148,14 +150,21 @@ def update():
 
 initConnection()
 
+currentRun = 0
+
 while True:
 	while messages != []:
 		message = messages.pop(0)
 		# message handling routine
-		print message.__dict__
-		if isinstance(message,EndOfRun):
+#		print message.__dict__
+		if isinstance(message,InitData):
+			print "Run N%s started"%currentRun
+		elif isinstance(message,EndOfRun):
 			print "Run ended with score",message.score
-			exit(0)
+			currentRun += 1
+			if currentRun == maxRuns:
+				print "the end"
+				exit(0)
 	update()
 	
 s.close()
