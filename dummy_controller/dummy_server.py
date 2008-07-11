@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import socket
 
 host = ""
@@ -16,9 +18,10 @@ for i in range(5):
 	conn.send("T 3450 aL -234.040 811.100 47.5 8.450 b -220.000 750.000 12.000 m -240.000 812.000 90.0 9.100 ;")
 	conn.send("S 0 ;")
 	conn.send("E 0 999.9 ;")
-#while 1:
-#    data = conn.recv(1024)
-#    if not data: break
+while 1:
+    data = conn.recv(1024)
+    if not data: 
+    	break
 #    conn.send(data)
 
 

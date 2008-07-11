@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import sys
 import socket
 import re
@@ -145,6 +147,14 @@ def update():
 		else:
 			return
 
+def sendCommand(command):
+	while True:
+		n = s.send(command)
+		command = command[n:]
+		if command == "":
+			break
+
+
 ##################3
 # main
 
@@ -159,12 +169,13 @@ while True:
 #		print message.__dict__
 		if isinstance(message,InitData):
 			print "Run N%s started"%currentRun
+			sendCommand(";")
 		elif isinstance(message,EndOfRun):
 			print "Run ended with score",message.score
 			currentRun += 1
 			if currentRun == maxRuns:
 				print "the end"
+				s.close()
 				exit(0)
 	update()
 	
-s.close()
