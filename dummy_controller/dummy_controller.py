@@ -151,6 +151,7 @@ def update():
 			return
 
 def sendCommand(command):
+	assert re.match(r"[ab]?[lr]?;$",command)
 	while True:
 		try:
 			n = s.send(command)
@@ -172,11 +173,11 @@ currentRun = 0
 while True:
 	while messages != []:
 		message = messages.pop(0)
-		# message handling routine
+
+		# message handling routine is here
 #		print message.__dict__
 		if isinstance(message,InitData):
-			print "Run N%s started"%currentRun
-			sendCommand(";")
+			print "Init message"
 		elif isinstance(message,EndOfRun):
 			print "Run ended with score",message.score
 			currentRun += 1
