@@ -24,5 +24,6 @@ while conn.isRunning():
 	if time.clock() > t+0.5:
 		t = time.clock()
 		cereb.printInfo()
+	time.sleep(0.01)
 	cereb.update()
 	

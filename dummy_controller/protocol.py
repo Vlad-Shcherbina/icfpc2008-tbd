@@ -62,6 +62,15 @@ class StaticObject(object):
 	Fields:
 		x,y,radius
 	"""
+	def __eq__(self,other):
+		if not isinstance(other,StaticObject):
+			return False
+		eps=1e-6
+		return self.kind==other.kind and \
+			abs(self.x-other.x)<eps and \
+			abs(self.y-other.y)<eps and \
+			abs(self.radius-other.radius)<eps
+
 	def __repr__(self):
 		return "Object"+repr(self.__dict__)
 

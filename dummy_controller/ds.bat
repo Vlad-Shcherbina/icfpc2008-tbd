@@ -1,3 +1,2 @@
-dummy_server.py
-sleep 1
+dummy_server.py >o 2>o2
 exit
