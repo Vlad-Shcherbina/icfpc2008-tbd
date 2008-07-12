@@ -134,7 +134,7 @@ class Cerebellum(object):
 			self.forwardControl = choice([0]*8+[1]+[-1])
 
 	def mainLoop(self):
-		while True:
+		while self.connection.isRunning():
 			self.update()
 			if self.command!=None and len(self.teles)>=2:
 				if self.command[0] == "rotateTo":
