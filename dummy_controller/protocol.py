@@ -182,7 +182,7 @@ class Connection(Thread):
 
 		self.buf = ""
 		self.messages = []
-		self.running = False
+		self.running = True
 		self.lock = Semaphore()
 
 	def run(self):

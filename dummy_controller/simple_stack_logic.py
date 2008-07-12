@@ -15,10 +15,14 @@ def calc_hit(x1, y1, x2, y2, px, py, R, r, g):
     c = sqrt(c2)
     cosalpha = (b2 + c2 - a2) / (2 * b * c)
     if (cosalpha < 0): return None # does not hit
+    assert cosalpha <= 1
+    assert cosalpha >= -1
     l = c * cosalpha
     if l > b: return None # does not hit
     sinalpha = sqrt(1 - cosalpha**2)
-    h = abs (c * sinalpha)
+    assert sinalpha <= 1
+    assert sinalpha >= -1
+    h = abs(c * sinalpha)
     if h > R: return None # does not hit
     hx = x1 + ((x2 - x1) * l) / b;
     hy = y1 + ((y2 - y1) * l) / b;
@@ -46,6 +50,7 @@ class SimpleStackLogic(object):
         y1 = tele.y
         if len(self.targets) == 0: return
         self.checkReached(x1, y1)
+        if len(self.targets) == 0: return
         x2, y2 = self.targets[0]
         d_min = None
         ox_min = None
