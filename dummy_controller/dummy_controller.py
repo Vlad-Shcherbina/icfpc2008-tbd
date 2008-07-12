@@ -54,7 +54,7 @@ cereb.command = ("moveTo",0,0)
 staticMap = StaticMap()
 cereb.registerMessageHandler(staticMap)
 
-logic = SimpleStackLogic(cereb, map)
+logic = SimpleStackLogic(cereb, staticMap)
 cereb.registerMessageHandler(logic)
 
 if visualize:

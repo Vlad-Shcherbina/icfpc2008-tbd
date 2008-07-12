@@ -201,14 +201,9 @@ class Connection(Thread):
 				m = re.search(";",self.buf)
 				while m:
 					command = self.buf[:m.end()]
-#					print '[DEBUG] adding message'
 					self.addMessage(eventTypes[command[0]](command))
 					self.buf = self.buf[m.end():]
 					m = re.search(";",self.buf)
-#		except socket.timeout,e:
-#			print 'DEBUG: socket timeout'
-#			self.running = False
-#			pass
 		except socket.error,e:
 			print 'DEBUG: socket closed'
 			self.running = False

@@ -15,7 +15,7 @@ def calc_hit(x1, y1, x2, y2, px, py, R, r, g):
     c = sqrt(c2)
     cosalpha = (b2 + c2 - a2) / (2 * b * c)
     if (cosalpha < 0): return None # does not hit
-    l = c * cosaplha
+    l = c * cosalpha
     if l > b: return None # does not hit
     sinalpha = sqrt(1 - cosalpha**2)
     h = abs (c * sinalpha)
@@ -37,10 +37,14 @@ class SimpleStackLogic(object):
         self.dx = initData.dx
         self.dy = initData.dy
 
+    def runStart(self,runNumber):    
+        self.targets = [(0,0)]
+
     def processTelemetry(self,tele):
         """message handler"""
         x1 = tele.x
         y1 = tele.y
+        if len(self.targets) == 0: return
         self.checkReached(x1, y1)
         x2, y2 = self.targets[0]
         d_min = None
