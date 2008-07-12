@@ -17,23 +17,19 @@ def circle(x,y,r):
 		a = 2*3.1415/100*i
 		glVertex2f(x+r*math.cos(a),y+r*math.sin(a))
 	glEnd()
-		
+
 
 class Visualizer(Thread):
 	def __init__(self):
 		Thread.__init__(self)
-		self.displayCommands = []
-		self.initData = None
-		self.telemetry = None
+		#self.setDaemon(True)
 		self.terminate = False
 
 	def run(self):
-		print "hello"
-		glutInit(sys.argv)
+		glutInit([])
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
 		glutInitWindowSize(400,400)
 		glutCreateWindow(name)
-#		glEnable(GL_DEPTH_TEST)
 
 		glClearColor(0.,0.,0.,1.)
 		glutDisplayFunc(self.display)
@@ -43,19 +39,26 @@ class Visualizer(Thread):
 
 	def idle(self):
 		if self.terminate:
-			exit()
+			print "terminate"
+			#exit()
 		glutPostRedisplay()
 
+	def processInitData(self,initData):
+		self.initData = initData
+
+	def processTelemetry(self,tele):
+		"""message handler"""
+		self.tele = tele
 
 	def rover(self):
-		t = self.telemetry
+		t = self.tele
 		d = self.initData
 		glPushMatrix()
-		glTranslatef(t.vehicleX,t.vehicleY,0)
+		glTranslatef(t.x,t.x,0)
 		glColor3f(1,1,1)
 		glutSolidSphere(0.5,20,10)
 
-		glRotatef(t.vehicleDir,0,0,1)
+		glRotatef(t.dir,0,0,1)
 		smallAxis = math.sqrt(d.maxSensor*d.minSensor)
 		glScalef(d.maxSensor+d.minSensor,smallAxis,0.001)
 		glTranslatef((d.maxSensor-d.minSensor)*0.5,0,0)
@@ -88,6 +91,8 @@ class Visualizer(Thread):
 		glPopMatrix()
 	
 	def display(self):
+		if self.terminate:
+			return
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
 		glOrtho(-self.initData.dx*0.5,
@@ -99,19 +104,18 @@ class Visualizer(Thread):
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 		glPushMatrix()
 
-		for c in self.displayCommands:
-			eval(c)
-
-		for o in self.cerebellum.staticObjects:
-			self.staticObject(o)
-
-		if self.telemetry:
+		if self.cerebellum.runInProgress:
 			self.rover()
-			for o in self.telemetry.objects:
+			for o in self.tele.objects:
 				if isinstance(o,StaticObject):
-					self.staticObject(o,highlight=True)
+					#self.staticObject(o,highlight=True)
+					pass
 				else:
 					self.martian(o)
+
+			# previously remembered objects
+			for o in self.staticMap.staticObjects:
+				self.staticObject(o)
 
 		glPopMatrix()
 		glutSwapBuffers()

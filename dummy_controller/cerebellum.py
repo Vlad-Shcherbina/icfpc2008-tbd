@@ -1,16 +1,11 @@
+import time
 from random import choice
 from numpy import *
 from numpy.linalg import *
 
 from protocol import *
 
-maxRuns = 3
-
-visualize = True
-#visualize = False
-
-if visualize:
-	from visualizer import Visualizer
+maxRuns = 1
 
 class MinSQ(object):
 	"""Class for minimal square optimization of given constraints"""
@@ -41,89 +36,91 @@ def subtractAngles(a,b):
 
 
 class Cerebellum(object):
+	"""
+	Cerebellum is responsible for movement parameters (such as drag) estimation
+	It is also intended to provide
+		`rotateTo`
+		`moveTo`
+	operations.
+
+	It also dispatches information to higher layers.
+	"""
 	def __init__(self,connection):
 		self.connection = connection
 
 		self.currentRun = 0
-
-		self.initData = None
 		self.messages = []
-
-		self.staticObjects = []
-		
 		self.newRun()
 
-		self.minSQ = MinSQ(3)
+		self.handlers = []
+		self.registerMessageHandler(self)
 
+		#initialize esteems
+		self.minSQ = MinSQ(3)
 		self.rotAccel = 0
 
-		if visualize:
-			self.vis = Visualizer()
-			self.vis.start()
-			self.vis.cerebellum = self
+	def registerMessageHandler(self,handler):
+		"""
+		handler is an object with following methods 
+		(but not necessarily all of them):
+			processInitData(initData)
+			runStart(runNumber)
+			processTelemetry(tele)
+			processEvent(event)
+			runFinish()
+		"""
+		self.handlers.append(handler)
 
 	def update(self):
-#		self.connection.update()
 		while self.connection.hasMessage():
 			m = self.connection.popMessage()
-			self.preprocessMessage(m)
+			self.processMessage(m)
 			self.messages.append(m)
 
+	def mainLoop(self):
+		while True:
+			time.sleep(0.005)
+			self.update()
+
 	def newRun(self):
-		print "run",self.currentRun
-
 		self.runInProgress = False
-		self.prevTele = None
-		self.prevPrevTele = None
 		self.accel = None
+		self.teles = []
+		self.numTeles = 0
 
-	def startRun(self,tele):
-		self.runInProgress = True
-		self.startTime = tele.timeStamp
+	def runStart(self,runNumber):	
+		"""message handler"""
 		self.numTimeStamps = 0
 		self.curTime = 0
 		               
 	def processInitData(self,initData):
+		"""message handler"""
 		self.initialData = initData
-		if visualize:
-			self.vis.initData = initData
 
 	def processTelemetry(self,tele):
-		for o in tele.objects:
-			if isinstance(o,StaticObject):
-				if o not in self.staticObjects:
-					print "static object added"
-					self.staticObjects.append(o)
-		if not self.runInProgress:
-			self.startRun(tele)
-			return 0
+		"""message handler"""
+		self.teles.append(tele)
+		self.teles = self.teles[-3:] # keep last three tele's
+		# so teles[-1] is current tele,
+		#    teles[-2] is previous one and so on
 		
-		self.numTimeStamps += 1
-		self.curTime = tele.timeStamp-self.startTime
+		self.numTeles += 1
+		if self.numTeles%20 == 0:
+			self.printInfo()
 
 		self.connection.sendCommand(
 			choice(["a","a","b",""]) +
 			choice(["l","l","l"]) + ";")
 
-		if visualize:
-			self.vis.telemetry = tele
+		if len(self.teles) >= 2:
+			dt = tele.timeStamp-self.teles[-2].timeStamp
 
-		if self.prevTele is not None:
-			dt = tele.timeStamp-self.prevTele.timeStamp
-			dSpeed = tele.vehicleSpeed-self.prevTele.vehicleSpeed
+			accelCmd = self.teles[-2].ctl[0]
+			rotCmd = self.teles[-2].ctl[1]
 
-			if False and self.prevPrevTele!=None:
-				dDir = subtractAngles(tele.vehicleDir,self.prevTele.vehicleDir)
-				prevDDir = subtractAngles(
-								self.prevTele.vehicleDir,
-								self.prevPrevTele.vehicleDir)
-
-				if dt>1e-8:
-					self.rotAccel = max(
-						self.rotAccel,
-						abs((dDir-self.prevDDir)/dt/dt) )
-
-			accelCmd = self.prevTele.vehicleCtl[0]
+			# form constraint of the form of the motion equation
+			# dv = dt*accel - dt*drag*speed*speed
+			dSpeed = tele.speed-self.teles[-2].speed
 			if accelCmd=="a":
 				coeffs = [dt,0]
 			elif accelCmd=="-":
@@ -131,28 +128,55 @@ class Cerebellum(object):
 			elif accelCmd=="b":
 				coeffs = [0,-dt]
 			self.minSQ.addConstraint(
-				array(coeffs+[-dt*self.prevTele.vehicleSpeed**2]),
+				array(coeffs+[-dt*self.teles[-2].speed**2]),
 				dSpeed )
 
-			rotCmd = self.prevTele.vehicleCtl[1]
+		if len(self.teles) >= 3:
+			# calculate angular acceleration
+			rotSpeed = \
+				subtractAngles(tele.dir,self.teles[-2].dir)/ \
+				(dt+1e-6)
+			prevDt=self.teles[-2].timeStamp-self.teles[-3].timeStamp
+			prevRotSpeed = subtractAngles(
+							self.teles[-2].dir,
+							self.teles[-3].dir)/(prevDt+1e-6)
+			if dt+prevDt>1e-8:
+				self.rotAccel = max(
+					self.rotAccel,
+					abs((rotSpeed-prevRotSpeed)/(dt+prevDt)*2) )
 
-		self.prevPrevTele =self.prevTele
-		self.prevTele = tele
 
-	def preprocessMessage(self,message):
+
+	def processMessage(self,message):
+		"""message dispatcher"""
 		if isinstance(message,InitData):
-			self.processInitData(message)
+			for h in self.handlers:
+				if hasattr(h,"processInitData"):
+					h.processInitData(message)
+
 		elif isinstance(message,Telemetry):
-			self.processTelemetry(message)
+			if not self.runInProgress:
+				self.runInProgress = True
+				for h in self.handlers:
+					if hasattr(h,"runStart"):
+						h.runStart(self.currentRun)
+			for h in self.handlers:
+				if hasattr(h,"processTelemetry"):
+					h.processTelemetry(message)
+
+		elif isinstance(message,Event):
+			for h in self.handlers:
+				if hasattr(h,"processEvent"):
+					h.processEvent(message)
+
 		elif isinstance(message,EndOfRun):
-			print "Run ended in %s with score %s"%(message.time,message.score)
+			for h in self.handlers:
+				if hasattr(h,"runFinish"):
+					h.runFinish(self.currentRun)
 			self.currentRun += 1
 			if self.currentRun == maxRuns:
 				print "the end"
 				self.connection.close()
-				if visualize:
-					self.vis.terminate = True
-					self.vis.join(1)
 				exit(0)
 			self.newRun()
 
@@ -166,8 +190,8 @@ class Cerebellum(object):
 		if not self.runInProgress:
 			return
 		self.esteemParams()
-		print "dt",self.curTime/(self.numTimeStamps+1e-6)
-		print "accel",self.accel
-		print "brake",self.brake
-		print "drag",self.drag
-		print "rotAccel",self.rotAccel
+		print "Estimates:"
+		print "  accel",self.accel
+		print "  brake",self.brake
+		print "  drag",self.drag
+		print "  rotAccel",self.rotAccel

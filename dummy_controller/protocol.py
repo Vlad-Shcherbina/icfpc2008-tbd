@@ -18,9 +18,9 @@ initRE = re.compile((
 	r"(?P<maxSpeed>%s) (?P<maxTurn>%s) (?P<maxHardTurn>%s) ;$" ) % \
 	(floatRE,floatRE,floatRE,floatRE,floatRE,floatRE,floatRE,floatRE,) )
 telemetryRE = re.compile((
-	r"T (?P<timeStamp>%s) (?P<vehicleCtl>[ab\-][Ll\-rR]) "+
-	r"(?P<vehicleX>%s) (?P<vehicleY>%s) "+
-	r"(?P<vehicleDir>%s) (?P<vehicleSpeed>%s) "+
+	r"T (?P<timeStamp>%s) (?P<ctl>[ab\-][Ll\-rR]) "+
+	r"(?P<x>%s) (?P<y>%s) "+
+	r"(?P<dir>%s) (?P<speed>%s) "+
 	r"(?P<objects>.*);$") % \
 	(floatRE,floatRE,floatRE,floatRE,floatRE,) )
 staticObjectRE = re.compile(
@@ -118,8 +118,9 @@ class Telemetry(object):
 			pos = m.end()
 
 		convertFloats(self,[
-			"timeStamp","vehicleX","vehicleY","vehicleDir","vehicleSpeed"])
-		self.timeStamp *= 0.001
+			"timeStamp","x","y","dir","speed"])
+		self.timeStamp *= 0.001 # it was given in milliseconds
+
 
 class Event(object):
 	"""

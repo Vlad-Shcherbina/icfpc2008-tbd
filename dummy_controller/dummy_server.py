@@ -43,7 +43,7 @@ rotSpeed = 0
 for i in range(1):
 	t = 0
 	time.sleep(0.2)
-	for i in range(200):
+	for i in range(100):
 		try:
 			data += conn.recv(1024)
 			time.sleep(0.01)
@@ -75,7 +75,7 @@ for i in range(1):
 			"b -4.000 7.000 1.000 " +
 			"m -2.000 8.000 90.0 9.100 ;")
 
-		dt = 0.02+random.random()*0.001
+		dt = 0.02+random.random()*0.02
 		time.sleep(dt)
 		t += dt
 		x += math.cos(math.radians(angle))*v*dt
