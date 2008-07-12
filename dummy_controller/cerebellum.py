@@ -5,7 +5,8 @@ from numpy.linalg import *
 from protocol import *
 
 
-visualize = False
+visualize = True
+#visualize = False
 
 if visualize:
 	from visualizer import Visualizer
