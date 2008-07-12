@@ -4,6 +4,10 @@ from numpy.linalg import *
 
 from protocol import *
 
+from visualizer import Visualizer
+
+visualize = True
+
 class MinSQ(object):
 	"""Class for minimal square optimization of given constraints"""
 	def __init__(self,n):
@@ -29,7 +33,7 @@ class Cerebellum(object):
 
 		self.currentRun = 0
 
-		self.initialData = None
+		self.initData = None
 		self.messages = []
 
 
@@ -38,6 +42,10 @@ class Cerebellum(object):
 		self.minSQ = MinSQ(3)
 		self.maxRotSpeed = 0
 		self.maxHardRotSpeed = 0
+
+		if visualize:
+			self.vis = Visualizer()
+			self.vis.start()
 
 	def update(self):
 		self.connection.update()
@@ -59,6 +67,11 @@ class Cerebellum(object):
 		self.numTimeStamps = 0
 		self.curTime = 0
 		               
+	def processInitData(self,initData):
+		self.initialData = initData
+		if visualize:
+			self.vis.initData = initData
+
 	def processTelemetry(self,tele):
 		if not self.runInProgress:
 			self.startRun(tele)
@@ -68,6 +81,10 @@ class Cerebellum(object):
 		self.curTime = tele.timeStamp-self.startTime
 
 		self.connection.sendCommand(choice(["a;","b;",";"]))
+
+		if visualize:
+			self.vis.telemetry = tele
+
 
 		if self.prevTele is not None:
 			dt = tele.timeStamp-self.prevTele.timeStamp
@@ -83,13 +100,13 @@ class Cerebellum(object):
 				array(coeffs+[-dt*self.prevTele.vehicleSpeed**2]),
 				dSpeed )
 
-		rotCmd = self.prevTele.vehicleCtl[1]
+			rotCmd = self.prevTele.vehicleCtl[1]
 
 		self.prevTele = tele
 
 	def preprocessMessage(self,message):
 		if isinstance(message,InitData):
-			self.initialData = message
+			self.processInitData(message)
 		elif isinstance(message,Telemetry):
 			self.processTelemetry(message)
 		elif isinstance(message,EndOfRun):
@@ -97,7 +114,9 @@ class Cerebellum(object):
 			self.currentRun += 1
 			if self.currentRun == maxRuns:
 				print "the end"
-				conn.close()
+				self.connection.close()
+				if visualize:
+					self.vis.join(0.01)
 				exit(0)
 			self.newRun()
 

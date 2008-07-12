@@ -4,7 +4,7 @@ import errno
 import re
 import new
 
-maxRuns = 5
+maxRuns = 1
 messages = []
 
 ################
