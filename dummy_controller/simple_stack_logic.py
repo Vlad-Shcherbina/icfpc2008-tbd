@@ -43,6 +43,9 @@ class SimpleStackLogic(object):
     def __init__(self, cere, mymap):
         self.cere = cere
         self.mymap = mymap
+        self.resetTargets()
+        
+    def resetTargets(self):
         self.targets = [(0,0)]
 
     def processInitData(self,initData):
@@ -50,7 +53,7 @@ class SimpleStackLogic(object):
         self.dy = initData.dy
 
     def runStart(self,runNumber):    
-        self.targets = [(0,0)]
+        self.resetTargets()
 
     def processTelemetry(self,tele):
         """message handler"""
@@ -76,6 +79,11 @@ class SimpleStackLogic(object):
             self.addTarget(ox_min, oy_min)
         x2, y2 = self.targets[0]
         self.cere.command = ("moveTo",x2,y2)
+        
+    def processEvent(self, event):
+        """We should reset targets stack after bounce"""
+        if event.tag == 'B':
+            self.resetTargets()
             
     def addTarget(self, x, y):
         self.targets.insert(0, (x,y))
