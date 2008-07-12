@@ -23,7 +23,24 @@ def circle(x,y,r,segments=50):
 		glVertex2f(x+r*cos(a),y+r*sin(a))
 	glEnd()
 
-
+				
+def base():
+	glColor3f(0,1,0)
+	circle(0,0,5)
+	for i in range(1,5):
+		circle(0,0,i)
+			
+def martian(martian):
+	glPushMatrix()
+	glTranslatef(martian.x,martian.y,0)
+	glColor3f(1,0,0)
+	glutSolidSphere(0.4,20,10)
+	glTranslatef(
+		0.4*cos(radians(martian.dir)),
+		0.4*sin(radians(martian.dir)),
+		0)
+	glutSolidSphere(0.2,20,10)
+	glPopMatrix()
 
 def staticObject(obj,highlight=False):
 	if obj.kind=="h":
@@ -38,9 +55,6 @@ def staticObject(obj,highlight=False):
 			circle(obj.x,obj.y,obj.radius*i/5,segments=10)
 
 def drawNode(node):
-	print node
-	print node.childs
-	print node.objects
 	if node.childs is not None:
 		for c in node.childs:
 			drawNode(c)
@@ -120,27 +134,15 @@ class Visualizer(Thread):
 		circle(0,0,1)
 		
 		glPopMatrix()
-				
-	def base(self):
-		glColor3f(0,1,0)
-		circle(0,0,5)
-		for i in range(1,5):
-			circle(0,0,i)
-			
-	def martian(self,martian):
-		glPushMatrix()
-		glTranslatef(martian.x,martian.y,0)
-		glColor3f(1,0,0)
-		glutSolidSphere(0.4,20,10)
-		glTranslatef(
-			0.4*cos(radians(martian.dir)),
-			0.4*sin(radians(martian.dir)),
-			0)
-		glutSolidSphere(0.2,20,10)
-		glPopMatrix()
-	
+		
+	def testIntersection(self):
+		pass
+
 	def display(self):
-		if not hasattr(self,"initData"): return
+		if not hasattr(self,"initData") or\
+			not hasattr(self,"tele") or\
+			not self.cerebellum.runInProgress: 
+			return
 		if self.terminate:
 			return
 		glMatrixMode(GL_PROJECTION)
@@ -154,20 +156,19 @@ class Visualizer(Thread):
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 		glPushMatrix()
 
-		if self.cerebellum.runInProgress and hasattr(self,"tele"):
-			self.base()
-			self.rover()
-			for o in self.tele.objects:
-				if isinstance(o,StaticObject):
-					staticObject(o,highlight=True)
-					pass
-				else:
-					self.martian(o)
+		base()
+		self.rover()
+		for o in self.tele.objects:
+			if isinstance(o,StaticObject):
+				staticObject(o,highlight=True)
+				pass
+			else:
+				martian(o)
 
-			# previously remembered objects
-			drawNode(self.staticMap.tree)
-			for o in self.staticMap.staticObjects:
-				staticObject(o)
+		# previously remembered objects
+		drawNode(self.staticMap.tree)
+		for o in self.staticMap.staticObjects:
+			staticObject(o)
 
 		glPopMatrix()
 		glutSwapBuffers()

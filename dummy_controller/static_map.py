@@ -2,6 +2,15 @@ from protocol import *
 
 NODE_MAX_OBJECTS = 5
 
+clearance={"b":0.5,"c":0.1}
+# clearance for boulder is 0.5, because if we touch it, we bounce
+# clearance for crate is 0 (because rover center is considered),
+# and 0.1 is added for safety
+
+def radius(o):
+	return o.radius+clearance[o.kind]
+
+
 def rectCircleIntersection(x1,y1,x2,y2,x,y,r):
 	"""Returns 
 	0 if no intersection, 
@@ -27,6 +36,7 @@ def rectCircleIntersection(x1,y1,x2,y2,x,y,r):
 	else:
 		return 1
 
+
 class Node(object):
 	"""
 	Fields:
@@ -49,12 +59,11 @@ class Node(object):
 		for o in objects:
 			self.addObject(o)
 	def addObject(self,o):
-		print "node add object"
 		if self.covered:
 			return
 		intersection = rectCircleIntersection(
 			self.x1,self.y1,self.x2,self.y2,
-			o.x,o.y,o.radius)
+			o.x,o.y,radius(o))
 		if intersection == 0:
 			return
 		if intersection == 2:
@@ -71,7 +80,6 @@ class Node(object):
 			for c in self.childs:
 				c.addObject(o)
 	def subdivide(self):
-		print "node subdivide"
 		if self.x2-self.x1>self.y2-self.y1:
 			xs = [self.x1,0.5*(self.x1+self.x2),self.x2]
 			ys = [self.y1,self.y2]
@@ -108,21 +116,15 @@ class StaticMap(object):
 		for o in tele.objects:
 			if isinstance(o,StaticObject):
 				if not self.objectsHash.has_key(o):
-					print "static object added"
 					self.staticObjects.append(o)
 					self.objectsHash[o] = True
 					self.tree.addObject(o)
 
-	def intersectionObjects(self,x,y,
-			clearance={"b":0.5,"c":0.1,"h":0.5}):
-		# clearance for boulder is 0.5, because if we touch it, we bounce
-		# similar reason determines clearance for home
-		# clearance for crate is 0 (because rover center is considered),
-		# and 0.1 is added for safety
+	def intersectionObjects(self,x,y):
 		"""Returns ' ' or kind of object intersected"""
 		for o in self.staticObjects:
 			dist2 = (o.x-x)*(o.x-x)+(o.y-y)*(o.y-y)
-			minDist = clearance[o.kind]+o.radius
+			minDist = radius(o)
 			if dist2 <= minDist*minDist:
 				return o.kind
 		return " "

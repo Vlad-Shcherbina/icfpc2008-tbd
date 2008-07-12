@@ -67,9 +67,13 @@ class StaticObject(object):
 			return False
 		eps=1e-6
 		return self.kind==other.kind and \
-			abs(self.x-other.x)<eps and \
-			abs(self.y-other.y)<eps and \
-			abs(self.radius-other.radius)<eps
+			self.x==other.x and \
+			self.y==other.y and \
+			self.radius==other.radius
+
+	def __hash__(self):
+		return  hash(self.kind) + \
+				113*hash(self.x+self.y*.91234+self.radius*3.1415)
 
 	def __repr__(self):
 		return "Object"+repr(self.__dict__)
