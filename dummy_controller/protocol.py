@@ -114,7 +114,8 @@ class Telemetry(object):
 				assert m
 				obj.__dict__ = m.groupdict()
 				convertFloats(obj,["x","y","radius"])
-				self.objects.append(obj)
+				if obj.kind!="h":
+					self.objects.append(obj)
 			pos = m.end()
 
 		convertFloats(self,[
