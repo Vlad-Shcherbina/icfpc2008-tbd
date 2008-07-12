@@ -1,4 +1,27 @@
+from random import choice
+from numpy import *
+from numpy.linalg import *
+
 from protocol import *
+
+class MinSQ(object):
+	"""Class for minimal square optimization of given constraints"""
+	def __init__(self,n):
+		self.n = n
+		self.a = zeros((n,n))
+		self.b = zeros((n,))
+	def addConstraint(self,c,d):
+		"""Takes constraint of the form c*x=d into account"""
+		m = array([[a*b for b in c] for a in c])
+		self.a += m
+		self.b += c*d
+			
+	def solve(self):
+		try:
+			self.x = solve(self.a,self.b)
+		except LinAlgError:
+			self.x = zeros((self.n,))
+			
 
 class Cerebellum(object):
 	def __init__(self,connection):
@@ -9,8 +32,12 @@ class Cerebellum(object):
 		self.initialData = None
 		self.messages = []
 
+
 		self.newRun()
-	
+
+		self.minSQ = MinSQ(3)
+		self.maxRotSpeed = 0
+		self.maxHardRotSpeed = 0
 
 	def update(self):
 		self.connection.update()
@@ -21,19 +48,43 @@ class Cerebellum(object):
 
 	def newRun(self):
 		print "run",self.currentRun
+
 		self.runInProgress = False
 		self.prevTele = None
 		self.accel = None
 
-	def processTelemetry(self,tele):
+	def startRun(self,tele):
 		self.runInProgress = True
-		self.connection.sendCommand("a;")
+		self.startTime = tele.timeStamp
+		self.numTimeStamps = 0
+		self.curTime = 0
+		               
+	def processTelemetry(self,tele):
+		if not self.runInProgress:
+			self.startRun(tele)
+			return 0
+		
+		self.numTimeStamps += 1
+		self.curTime = tele.timeStamp-self.startTime
+
+		self.connection.sendCommand(choice(["a;","b;",";"]))
+
 		if self.prevTele is not None:
 			dt = tele.timeStamp-self.prevTele.timeStamp
-			if self.prevTele.vehicleCtl[0]=="a" and dt>1e-6:
-				self.accel = \
-					(tele.vehicleSpeed-self.prevTele.vehicleSpeed)/dt
-				print self.accel
+			dSpeed = tele.vehicleSpeed-self.prevTele.vehicleSpeed
+			accelCmd = self.prevTele.vehicleCtl[0]
+			if accelCmd=="a":
+				coeffs = [dt,0]
+			elif accelCmd=="-":
+				coeffs = [0,0]
+			elif accelCmd=="b":
+				coeffs = [0,-dt]
+			self.minSQ.addConstraint(
+				array(coeffs+[-dt*self.prevTele.vehicleSpeed**2]),
+				dSpeed )
+
+		rotCmd = self.prevTele.vehicleCtl[1]
+
 		self.prevTele = tele
 
 	def preprocessMessage(self,message):
@@ -50,7 +101,17 @@ class Cerebellum(object):
 				exit(0)
 			self.newRun()
 
+	def esteemParams(self):
+		self.minSQ.solve()
+		self.accel = self.minSQ.x[0]
+		self.brake = self.minSQ.x[1]
+		self.drag = self.minSQ.x[2]
+
 	def printInfo(self):
 		if not self.runInProgress:
 			return
-		print "accel = ",self.accel
+		self.esteemParams()
+		print "dt",self.curTime/(self.numTimeStamps+1e-6)
+		print "accel",self.accel
+		print "brake",self.brake
+		print "drag",self.drag
