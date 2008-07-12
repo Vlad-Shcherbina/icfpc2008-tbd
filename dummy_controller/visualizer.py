@@ -74,7 +74,7 @@ class Visualizer(Thread):
 		if obj.kind=="h":
 			glColor3f(0,1,0)
 		elif obj.kind=="c":
-			glColor3f(0,1,0)
+			glColor3f(1,0,0)
 		elif obj.kind=="b":
 			glColor3f(1,1,1)
 		circle(obj.x,obj.y,obj.radius)

@@ -32,9 +32,9 @@ maxHardTurn = 30
 conn.send("I 20 20 999.9 0.5 3 %s %s %s ;" %
 			(math.sqrt(accel/drag),maxTurn,maxHardTurn) )
 
-x = 0
+x = 5
+y = 6
 v = 0
-y = 0
 angle = 30
 data = ""
 acc = 0

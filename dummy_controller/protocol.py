@@ -232,7 +232,9 @@ class Connection(Thread):
 
 	def sendCommand(self,command):
 		"""Send a single command to the rover"""
-		assert re.match(r"[ab]?[lr]?;$",command)
+		if command=="":
+			return
+		assert re.match(r"([ab]?[lr]?;)+$",command)
 		self.socket.sendall(command)
 
 	def close(self):

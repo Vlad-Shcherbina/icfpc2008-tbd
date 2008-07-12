@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-visualize = True
+#visualize = True
+visualize = eval(open("visualize.config").readline())
+
 
 import time
 
@@ -36,7 +38,8 @@ port = int(sys.argv[2])
 
 conn = Connection(ip,port)
 cereb = Cerebellum(conn)
-cereb.command = ("rotateTo",135)
+cereb.command = ("rotateTo",0,0)
+
 
 #cereb.registerMessageHandler(TestHandler())
 

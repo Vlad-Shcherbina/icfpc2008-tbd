@@ -88,22 +88,38 @@ class Cerebellum(object):
 	def cmd(self,command):
 		self.connection.sendCommand(command)
 
-	def rotateTo(self,desiredDir):
-		minDt = 0.05
-		desiredDir = self.command[1]
-		dDir = subtractAngles(desiredDir,self.teles[-1].dir)
-		if dDir*(dDir-self.rotSpeed**2/self.rotAccel/2) <= 0:
-			return
-		elif dDir*self.rotSpeed>=0:
-			
+	def setForwardControl(self,v):
+		self.cmd("a;"*(v-self._forwardControl)+"b;"*(self._forwardControl-v))
+		self._forwardControl = v
+	def getForwardControl(self):
+		return self._forwardControl
+	forwardControl = property(getForwardControl,setForwardControl)
 
-			self.cmd("l;")
-			time.sleep(minDt)
-			self.cmd("r;")
+	def setTurnControl(self,t):
+		self.cmd("l;"*(t-self._turnControl)+"r;"*(self._turnControl-t))
+		self._turnControl = t
+	def getTurnControl(self):
+		return self._turnControl
+	turnControl = property(getTurnControl,setTurnControl)
+
+	def rotateTo(self,x,y):
+		minDt = 0.05
+		desiredDir=math.degrees(math.atan2(y-self.teles[-1].y,
+										   x-self.teles[-1].x))
+		dDir = subtractAngles(desiredDir,self.teles[-1].dir)
+
+		dt = minDt
+		if abs(dDir)>90:
+			dt *= 2
+
+		if dDir>15:
+			self.turnControl = 2
+		elif dDir>0:
+			self.turnControl = 1
+		elif dDir>-15:
+			self.turnControl = -1
 		else:
-			self.cmd("r;")
-			time.sleep(minDt)
-			self.cmd("l;")
+			self.turnControl = -2
 
 
 	def mainLoop(self):
@@ -111,7 +127,7 @@ class Cerebellum(object):
 			self.update()
 			if self.command!=None and len(self.teles)>=2:
 				if self.command[0] == "rotateTo":
-					#self.rotateTo(self.command[1])
+					self.rotateTo(self.command[1],self.command[2])
 					pass
 			time.sleep(0.01)
 
@@ -123,8 +139,12 @@ class Cerebellum(object):
 
 	def runStart(self,runNumber):	
 		"""message handler"""
+		self._forwardControl = 0
+		self._turnControl = 0
+
 		self.numTimeStamps = 0
 		self.curTime = 0
+		self.forwardControl = 1
 		               
 	def processInitData(self,initData):
 		"""message handler"""
@@ -142,7 +162,7 @@ class Cerebellum(object):
 		if self.numTeles%20 == 0:
 			self.printInfo()
 
-		self.cmd(choice(["al;","al;","br;",]))
+#		self.cmd(choice(["al;","al;","br;",]))
 		
 		if len(self.teles) >= 2:
 			dt = tele.timeStamp-self.teles[-2].timeStamp
