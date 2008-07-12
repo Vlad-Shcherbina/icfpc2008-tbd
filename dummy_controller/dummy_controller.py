@@ -38,7 +38,7 @@ port = int(sys.argv[2])
 
 conn = Connection(ip,port)
 cereb = Cerebellum(conn)
-cereb.command = ("rotateTo",0,0)
+cereb.command = ("moveTo",0,0)
 
 
 #cereb.registerMessageHandler(TestHandler())

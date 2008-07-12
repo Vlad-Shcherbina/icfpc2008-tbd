@@ -1,6 +1,6 @@
 from threading import Thread	
 import sys
-import math
+from math import *
 
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -15,7 +15,7 @@ def circle(x,y,r):
 	glBegin(GL_LINE_LOOP)
 	for i in range(100):
 		a = 2*3.1415/100*i
-		glVertex2f(x+r*math.cos(a),y+r*math.sin(a))
+		glVertex2f(x+r*cos(a),y+r*sin(a))
 	glEnd()
 
 
@@ -61,7 +61,7 @@ class Visualizer(Thread):
 
 		glRotatef(t.dir,0,0,1)
 		longAxis = (d.maxSensor+d.minSensor)*0.5
-		shortAxis = math.sqrt(d.maxSensor*d.minSensor)
+		shortAxis = sqrt(d.maxSensor*d.minSensor)
 		glTranslatef((d.maxSensor-d.minSensor)*0.5,0,-5)
 		glScalef(longAxis,shortAxis,0.001)
 		glColor3f(0.5,0.5,0.5)
@@ -88,8 +88,8 @@ class Visualizer(Thread):
 		glColor3f(1,0,0)
 		glutSolidSphere(0.4,20,10)
 		glTranslatef(
-			0.4*math.cos(math.radians(martian.dir)),
-			0.4*math.sin(math.radians(martian.dir)),
+			0.4*cos(radians(martian.dir)),
+			0.4*sin(radians(martian.dir)),
 			0)
 		glutSolidSphere(0.2,20,10)
 		glPopMatrix()

@@ -25,9 +25,9 @@ accel = 1
 brake = 1
 drag = 0.1
 
-rotAccel = 50
-maxTurn = 15
-maxHardTurn = 30
+rotAccel = 150
+maxTurn = 25
+maxHardTurn = 50
 
 conn.send("I 20 20 999.9 0.5 3 %s %s %s ;" %
 			(math.sqrt(accel/drag),maxTurn,maxHardTurn) )

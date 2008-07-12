@@ -2,10 +2,11 @@ import time
 from random import choice
 from numpy import *
 from numpy.linalg import *
+from math import *
 
 from protocol import *
 
-maxRuns = 3
+maxRuns = 6
 
 class MinSQ(object):
 	"""Class for minimal square optimization of given constraints"""
@@ -102,15 +103,10 @@ class Cerebellum(object):
 		return self._turnControl
 	turnControl = property(getTurnControl,setTurnControl)
 
-	def rotateTo(self,x,y):
-		minDt = 0.05
-		desiredDir=math.degrees(math.atan2(y-self.teles[-1].y,
-										   x-self.teles[-1].x))
+	def _rotateTo(self,x,y):
+		desiredDir=degrees(atan2(y-self.teles[-1].y,
+							     x-self.teles[-1].x))
 		dDir = subtractAngles(desiredDir,self.teles[-1].dir)
-
-		dt = minDt
-		if abs(dDir)>90:
-			dt *= 2
 
 		if dDir>15:
 			self.turnControl = 2
@@ -121,14 +117,24 @@ class Cerebellum(object):
 		else:
 			self.turnControl = -2
 
+	def _moveTo(self,x,y):
+		self._rotateTo(x,y)
+		dirX = cos(radians(self.teles[-1].dir))
+		dirY = sin(radians(self.teles[-1].dir))
+		dot = dirX*(x-self.teles[-1].x)+dirY*(y-self.teles[-1].y)
+		if dot>0:
+			self.forwardControl = choice([1]*8+[0]+[-1])
+		else:
+			self.forwardControl = choice([0]*8+[1]+[-1])
 
 	def mainLoop(self):
 		while True:
 			self.update()
 			if self.command!=None and len(self.teles)>=2:
 				if self.command[0] == "rotateTo":
-					self.rotateTo(self.command[1],self.command[2])
-					pass
+					self._rotateTo(self.command[1],self.command[2])
+				elif self.command[0] == "moveTo":
+					self._moveTo(self.command[1],self.command[2])
 			time.sleep(0.01)
 
 	def newRun(self):
@@ -144,7 +150,6 @@ class Cerebellum(object):
 
 		self.numTimeStamps = 0
 		self.curTime = 0
-		self.forwardControl = 1
 		               
 	def processInitData(self,initData):
 		"""message handler"""
