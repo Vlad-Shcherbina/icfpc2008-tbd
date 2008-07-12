@@ -1,3 +1,4 @@
+from uuid import _last_timestamp
 import time
 from random import choice
 from numpy import *
@@ -7,6 +8,7 @@ from math import *
 from protocol import *
 
 maxRuns = 6
+
 
 class MinSQ(object):
 	"""Class for minimal square optimization of given constraints"""
@@ -67,6 +69,10 @@ class Cerebellum(object):
 		self.latency = 0.02 # TODO: estimate it correctly
 
 		self.command = None
+		
+		self.clockOffset = None
+		self.avgReceptionLatency = 0
+		
 
 	def registerMessageHandler(self,handler):
 		"""
@@ -157,7 +163,17 @@ class Cerebellum(object):
 
 	def processTelemetry(self,tele):
 		"""message handler"""
-
+		
+		#update reception latency
+		if self.clockOffset == None:
+			self.clockOffset = time.clock() - tele.timeStamp;
+		else:
+			newOffset = time.clock() - tele.timeStamp
+			diff = abs(self.clockOffset - newOffset) 
+			self.avgReceptionLatency = self.avgReceptionLatency * 0.9 + diff * 0.1
+			self.clockOffset = newOffset
+			
+		
 		self.teles.append(tele)
 		self.teles = self.teles[-3:] # keep last three tele's
 		# so teles[-1] is current tele,
@@ -255,3 +271,4 @@ class Cerebellum(object):
 		print "  brake",self.brake
 		print "  drag",self.drag
 		print "  rotAccel",self.rotAccel
+		print "  receptionLatency",self.avgReceptionLatency
