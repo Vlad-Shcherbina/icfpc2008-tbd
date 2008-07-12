@@ -16,3 +16,15 @@ class StaticMap(object):
 					print "static object added"
 					self.staticObjects.append(o)
 
+	def intersectionObjects(self,x,y,
+			clearance={"b":0.5,"c":0.1,"h":0.5}):
+		# clearance for boulder is 0.5, because if we touch it, we bounce
+		# silimal reason determines clearance for home
+		# clearance for crate is 0 (because rover center is considered),
+		# and 0.1 is added for safety
+		res = []
+		for o in self.staticObjects:
+			dist = (o.x-x)*(o.x-x)+(o.y-y)*(o.y-y)
+			if dist <= (clearance+o.radius)*(clearance+o.radius):
+				res.append(o)
+		return res
