@@ -4,9 +4,11 @@ from numpy.linalg import *
 
 from protocol import *
 
-from visualizer import Visualizer
 
 visualize = True
+
+if visualize:
+	from visualizer import Visualizer
 
 class MinSQ(object):
 	"""Class for minimal square optimization of given constraints"""
