@@ -223,19 +223,21 @@ class Connection(Thread):
 		return self.running
 		
 	def addMessage(self, message):
-		self.lock.acquire(true)
+		self.lock.acquire(True)
 		self.messages.append(message)
 		self.lock.release()
 
 	def hasMessage(self):
-		self.lock.acquire(true)
-		return len(self.messages) > 0
+		self.lock.acquire(True)
+		rt = len(self.messages) > 0
 		self.lock.release()
+		return rt
 
 	def popMessage(self):
-		self.lock.acquire(true)
-		return self.messages.pop(0)
+		self.lock.acquire(True)
+		rt = self.messages.pop(0)
 		self.lock.release()
+		return rt
 
 	def sendCommand(self,command):
 		"""Send a single command to the rover"""
