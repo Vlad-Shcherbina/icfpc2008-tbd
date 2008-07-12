@@ -53,6 +53,7 @@ class InitData(object):
 			"dx","dy","timeLimit",
 			"minSensor","maxSensor",
 			"maxSpeed","maxTurn","maxHardTurn"])
+		self.timeLimit *= 0.001
 
 
 class StaticObject(object):
@@ -108,6 +109,7 @@ class Telemetry(object):
 
 		convertFloats(self,[
 			"timeStamp","vehicleX","vehicleY","vehicleDir","vehicleSpeed"])
+		self.timeStamp *= 0.001
 
 class Event(object):
 	"""
@@ -119,6 +121,7 @@ class Event(object):
 		assert m
 		self.__dict__ = m.groupdict()
 		convertFloats(self,["timeStamp"])
+		self.timeStamp *= 0.001
 
 class EndOfRun(object):
 	"""
@@ -147,10 +150,11 @@ eventTypes = {
 
 class Connection(object):
 	"""
-	This class is responsible for connection with rover.
+	This class is responsible for connection with the rover.
 
 	It maintains `messages` field which can be consumed by client 
-	from the beginning.
+	from the beginning. But it is better to use `hasMessage` and `popMessage`
+	methods.
 
 	`update` have to be called periodically
 	"""
@@ -189,6 +193,12 @@ class Connection(object):
 				self.buf = self.buf[m.end():]
 			else:
 				return
+
+	def hasMessage(self):
+		return len(self.messages) > 0
+
+	def popMessage(self):
+		return self.messages.pop(0)
 
 	def sendCommand(self,command):
 		"""Send a single command to the rover"""
