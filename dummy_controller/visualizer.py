@@ -81,6 +81,12 @@ class Visualizer(Thread):
 		if highlight:
 			for i in range(1,5):
 				circle(obj.x,obj.y,obj.radius*i/5)
+				
+	def base(self):
+		glColor3f(0,1,0)
+		circle(0,0,5)
+		for i in range(1,5):
+			circle(0,0,i)
 			
 	def martian(self,martian):
 		glPushMatrix()
@@ -110,6 +116,7 @@ class Visualizer(Thread):
 		glPushMatrix()
 
 		if self.cerebellum.runInProgress and hasattr(self,"tele"):
+			self.base()
 			self.rover()
 			for o in self.tele.objects:
 				if isinstance(o,StaticObject):

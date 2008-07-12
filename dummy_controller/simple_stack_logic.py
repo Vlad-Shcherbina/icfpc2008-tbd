@@ -3,11 +3,12 @@ from static_map import *
 from math import *
 
 def calc_hit(x1, y1, x2, y2, px, py, R, r, g):
-    """calculates the height of a point (px,py) over the segment ((x1,y1),(x2,y2)).
+    """calculates the math magic for an obstacle (px,py) with the radius R over the segment ((x1,y1),(x2,y2)).
+    r - rover radius
+    g - preferred avoidance distance (safe distance to pass by an obstacle)
     returns:
      - None when the point's height does not hit the segment
-     - positive number when point is to the left of our direction
-     - negative number when point is to the right of our direction"""
+     - distance till the point of an obstacle hit and coordinates of recommended avoidance point otherwise"""
     a2 = (x2-px)**2 + (y2-py)**2
     b2 = (x1-x2)**2 + (y1-y2)**2
     c2 = (x1-px)**2 + (y1-py)**2
@@ -63,7 +64,6 @@ class SimpleStackLogic(object):
         ox_min = None
         oy_min = None
         for o in self.mymap.staticObjects:
-            print "calc object "  + repr(o)
             rslt = calc_hit(x1, y1, x2, y2, o.x, o.y, o.radius, 0.5, 0.1)
             if not (rslt is None):
                 d, ox, oy = rslt
