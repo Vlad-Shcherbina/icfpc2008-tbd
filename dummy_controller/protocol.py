@@ -3,7 +3,7 @@ import socket
 import errno
 import re
 import new
-from threading import Thread
+from threading import Thread, Semaphore
 
 maxRuns = 1
 messages = []
@@ -183,6 +183,7 @@ class Connection(Thread):
 		self.buf = ""
 		self.messages = []
 		self.running = False
+		self.lock = Semaphore()
 
 	def run(self):
 		"""
@@ -222,13 +223,19 @@ class Connection(Thread):
 		return self.running
 		
 	def addMessage(self, message):
+		self.lock.acquire(true)
 		self.messages.append(message)
+		self.lock.release()
 
 	def hasMessage(self):
+		self.lock.acquire(true)
 		return len(self.messages) > 0
+		self.lock.release()
 
 	def popMessage(self):
+		self.lock.acquire(true)
 		return self.messages.pop(0)
+		self.lock.release()
 
 	def sendCommand(self,command):
 		"""Send a single command to the rover"""
