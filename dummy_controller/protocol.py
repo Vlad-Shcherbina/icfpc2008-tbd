@@ -223,17 +223,7 @@ class Connection(Thread):
 	def sendCommand(self,command):
 		"""Send a single command to the rover"""
 		assert re.match(r"[ab]?[lr]?;$",command)
-		while True:
-			try:
-				n = self.socket.send(command)
-				command = command[n:]
-				if command == "":
-					break
-			except socket.timeout:
-				pass
-			except socket.error,e:
-				if e[0] not in [11,errno.EWOULDBLOCK]:
-					raise
+		self.socket.sendall(command)
 
 	def close(self):
 		self.socket.close()
