@@ -1,6 +1,11 @@
+import psyco
+psyco.full()
+
 from threading import Thread	
 import sys
 from math import *
+from random import random
+import time
 
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -11,13 +16,49 @@ from protocol import *
 
 name = 'suka glut'
 
-def circle(x,y,r):
+def circle(x,y,r,segments=50):
 	glBegin(GL_LINE_LOOP)
-	for i in range(100):
-		a = 2*3.1415/100*i
+	for i in range(segments):
+		a = 2*3.1415/segments*i
 		glVertex2f(x+r*cos(a),y+r*sin(a))
 	glEnd()
 
+
+
+def staticObject(obj,highlight=False):
+	if obj.kind=="h":
+		glColor3f(0,1,0)
+	elif obj.kind=="c":
+		glColor3f(1,0,0)
+	elif obj.kind=="b":
+		glColor3f(1,1,1)
+	circle(obj.x,obj.y,obj.radius,segments = 20)
+	if highlight:
+		for i in range(1,5):
+			circle(obj.x,obj.y,obj.radius*i/5,segments=10)
+
+def drawNode(node):
+	print node
+	print node.childs
+	print node.objects
+	if node.childs is not None:
+		for c in node.childs:
+			drawNode(c)
+		return
+	glPushMatrix()
+	glColor3f(0,0,1)
+	glTranslatef(0.5*(node.x1+node.x2),0.5*(node.y1+node.y2),0)
+	glScalef(0.5*(node.x2-node.x1),0.5*(node.y2-node.y1),1)
+#	circle(0,0,1)
+	glBegin(GL_LINE_LOOP)
+	glVertex2f(-1,-1)
+	glVertex2f( 1,-1)
+	glVertex2f( 1, 1)
+	glVertex2f(-1, 1)
+	glEnd()
+	glPopMatrix()
+#	for o in node.objects:
+#		staticObject(o)
 
 class Visualizer(Thread):
 	def __init__(self):
@@ -42,6 +83,7 @@ class Visualizer(Thread):
 		if self.terminate:
 			print "terminate"
 			#exit()
+		time.sleep(0.01)
 		glutPostRedisplay()
 
 	def processInitData(self,initData):
@@ -69,18 +111,6 @@ class Visualizer(Thread):
 		circle(0,0,1)
 		
 		glPopMatrix()
-
-	def staticObject(self,obj,highlight=False):
-		if obj.kind=="h":
-			glColor3f(0,1,0)
-		elif obj.kind=="c":
-			glColor3f(1,0,0)
-		elif obj.kind=="b":
-			glColor3f(1,1,1)
-		circle(obj.x,obj.y,obj.radius)
-		if highlight:
-			for i in range(1,5):
-				circle(obj.x,obj.y,obj.radius*i/5)
 				
 	def base(self):
 		glColor3f(0,1,0)
@@ -120,14 +150,15 @@ class Visualizer(Thread):
 			self.rover()
 			for o in self.tele.objects:
 				if isinstance(o,StaticObject):
-					self.staticObject(o,highlight=True)
+					staticObject(o,highlight=True)
 					pass
 				else:
 					self.martian(o)
 
 			# previously remembered objects
+			drawNode(self.staticMap.tree)
 			for o in self.staticMap.staticObjects:
-				self.staticObject(o)
+				staticObject(o)
 
 		glPopMatrix()
 		glutSwapBuffers()
