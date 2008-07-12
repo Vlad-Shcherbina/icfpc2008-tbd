@@ -29,7 +29,7 @@ while True:
 			print "Init message"
 		elif isinstance(message,Telemetry):
 			runInProgress = True
-			print message.__dict__
+#			print message.__dict__
 			conn.sendCommand("a;")
 		elif isinstance(message,EndOfRun):
 			print "Run ended with score",message.score
