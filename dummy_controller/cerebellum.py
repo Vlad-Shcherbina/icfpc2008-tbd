@@ -37,6 +37,19 @@ def subtractAngles(a,b):
 		res -= 360
 	return res
 
+def lerp(a, b, q):
+	return a * (1 - q) + b * q
+
+class FOFilter(object):
+	def __init__(self, quotient, value = 0.0):
+		self.quotient = quotient
+		self.value = value
+	
+	def next(self, value):
+		self.value = lerp(self.value, value, self.quotient)
+	
+	def __str__(self):
+		return str(self.value)
 
 #class RotationPredictor(object):
 #	def __init__(self,dir,rotSpeed):
@@ -71,7 +84,7 @@ class Cerebellum(object):
 		self.command = None
 		
 		self.clockOffset = None
-		self.avgReceptionLatency = 0
+		self.avgReceptionLatency = None
 		
 
 	def registerMessageHandler(self,handler):
@@ -148,6 +161,8 @@ class Cerebellum(object):
 		self.accel = None
 		self.teles = []
 		self.numTeles = 0
+		self.clockOffset = None
+		print "*"*20, "\nNew Run!\n", "*"*20
 
 	def runStart(self,runNumber):	
 		"""message handler"""
@@ -160,18 +175,22 @@ class Cerebellum(object):
 	def processInitData(self,initData):
 		"""message handler"""
 		self.initialData = initData
+		self.clockOffset = None #reset clock
+		
 
 	def processTelemetry(self,tele):
 		"""message handler"""
 		
 		#update reception latency
 		if self.clockOffset == None:
-			self.clockOffset = time.clock() - tele.timeStamp;
+			self.clockOffset = FOFilter(1.0, time.clock() - tele.timeStamp);
+			self.avgReceptionLatency = FOFilter(0.1, 0.0)
 		else:
 			newOffset = time.clock() - tele.timeStamp
-			diff = abs(self.clockOffset - newOffset) 
-			self.avgReceptionLatency = self.avgReceptionLatency * 0.9 + diff * 0.1
-			self.clockOffset = newOffset
+			diff = self.clockOffset.value - newOffset 
+			print self.clockOffset, diff
+			self.avgReceptionLatency.next(abs(diff))
+			self.clockOffset.next(newOffset)
 			
 		
 		self.teles.append(tele)
