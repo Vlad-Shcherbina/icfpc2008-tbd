@@ -1,0 +1,34 @@
+Инструкция по запуску говносервера на обычном линуксе (дебиане в данном случае) в виртуалбоксе.
+
+1) ставим качаться http://ftp.sunet.se/pub/gnu/gmp/gmp-4.2.2.tar.bz2
+2)
+su
+apt-get install libc6-dev
+Распаковываем куда-нибудь либгмп (bunzip2, tar)
+./configure
+make install
+
+vi /etc/ld.so.conf, добавляем туда строчку
+/usr/local/lib
+
+запускаем /sbin/ldconfig
+
+затем 
+apt-get install libglut
+
+Если сервер запускается, но не рисует марс, то ещё
+apt-get install libgl1-mesa-swx11
+
+Всё. Ну, ещё нужно соединить реальную машину с виртуалбоксом, либо поменяв у него 
+режим сетевой карты с NAT на хост-чего-то-там, либо запустив (на хосте) батничек
+следующего содержания:
+
+cd "C:\Program Files\innotek VirtualBox"
+set machinename="Debian" 
+set port=17676
+VBoxManage setextradata %machinename% "VBoxInternal/Devices/pcnet/0/LUN#0/Config/icfpc/Protocol" TCP
+VBoxManage setextradata %machinename% "VBoxInternal/Devices/pcnet/0/LUN#0/Config/icfpc/GuestPort" %port%
+VBoxManage setextradata %machinename% "VBoxInternal/Devices/pcnet/0/LUN#0/Config/icfpc/HostPort" %port%
+
+
+Вот так вот.
