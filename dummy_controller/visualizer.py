@@ -95,6 +95,7 @@ class Visualizer(Thread):
 		glPopMatrix()
 	
 	def display(self):
+		if not self.initData: return
 		if self.terminate:
 			return
 		glMatrixMode(GL_PROJECTION)
