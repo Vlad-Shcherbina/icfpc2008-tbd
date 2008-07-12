@@ -61,10 +61,17 @@ def drawNode(node):
 #		staticObject(o)
 
 class Visualizer(Thread):
-	def __init__(self):
+	def __init__(self, cerebellum, staticMap, keyHandler = None):
 		Thread.__init__(self)
 		#self.setDaemon(True)
 		self.terminate = False
+		
+		self.cerebellum = cerebellum
+		self.staticMap = staticMap
+		self.keyHandler = keyHandler
+		
+		cerebellum.registerMessageHandler(self)
+		
 
 	def run(self):
 		glutInit([])
@@ -76,9 +83,11 @@ class Visualizer(Thread):
 		glClearColor(0.,0.,0.,1.)
 		glutDisplayFunc(self.display)
 		glutIdleFunc(self.idle)
+		if (self.keyHandler):
+			glutKeyboardFunc(self.keyhandler)
 
 		glutMainLoop()
-
+		
 	def idle(self):
 		if self.terminate:
 			print "terminate"

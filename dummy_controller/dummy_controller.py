@@ -58,10 +58,7 @@ logic = SimpleStackLogic(cereb, staticMap)
 cereb.registerMessageHandler(logic)
 
 if visualize:
-	vis = Visualizer()
-	vis.cerebellum = cereb
-	vis.staticMap = staticMap
-	cereb.registerMessageHandler(vis)
+	vis = Visualizer(cereb, staticMap)
 	vis.start()
 
 
