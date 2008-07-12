@@ -1,4 +1,6 @@
 #!/usr/bin/python
+import sys
+
 import psyco
 psyco.full()
 
@@ -63,4 +65,4 @@ if visualize:
 
 conn.start()
 cereb.mainLoop()
-	
+sys.exit(0)
