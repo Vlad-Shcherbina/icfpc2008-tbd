@@ -129,8 +129,10 @@ class Cerebellum(object):
 
 		if dDir>15:
 			self.turnControl = 2
-		elif dDir>0:
+		elif dDir>3:
 			self.turnControl = 1
+		elif dDir>-3:
+			self.turnControl = 0
 		elif dDir>-15:
 			self.turnControl = -1
 		else:
