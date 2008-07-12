@@ -24,7 +24,8 @@ class StaticMap(object):
 		# and 0.1 is added for safety
 		res = []
 		for o in self.staticObjects:
-			dist = (o.x-x)*(o.x-x)+(o.y-y)*(o.y-y)
-			if dist <= (clearance+o.radius)*(clearance+o.radius):
+			dist2 = (o.x-x)*(o.x-x)+(o.y-y)*(o.y-y)
+			minDist = clearance[o.kind]+o.radius
+			if dist2 <= minDist*minDist:
 				res.append(o)
 		return res
