@@ -3,6 +3,7 @@ import socket
 import errno
 import re
 import new
+from threading import Thread
 
 maxRuns = 1
 messages = []
@@ -148,7 +149,7 @@ eventTypes = {
 ###########
 # networking tools
 
-class Connection(object):
+class Connection(Thread):
 	"""
 	This class is responsible for connection with the rover.
 
@@ -159,40 +160,59 @@ class Connection(object):
 	`update` have to be called periodically
 	"""
 	def __init__(self,ip,port):
+		Thread.__init__(self)
 #		print "Connecting %s:%s..."%(ip,port)
 		self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 #		self.socket.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
 
 		self.socket.connect((ip,port))
 	
-		self.socket.setblocking(0)
-		self.socket.settimeout(0.005)
+		self.socket.setblocking(1)
+#		self.socket.settimeout(0.005)
 
 		self.buf = ""
 		self.messages = []
+		self.running = False
 
-	def update(self):
+	def run(self):
 		"""
 		receive information from rover (if any) and 
 		put it into `messages` field
 		"""
+		self.running = True
 		try:
-			received = self.socket.recv(1024)
-			self.buf += received
-		except socket.timeout:
-			pass
+			while self.running:
+				received = self.socket.recv(1024)
+				if len(received) == 0: # socket closed
+					self.running = False
+					continue
+				self.buf += received
+				m = re.search(";",self.buf)
+				while m:
+					command = self.buf[:m.end()]
+#					print '[DEBUG] adding message'
+					self.addMessage(eventTypes[command[0]](command))
+					self.buf = self.buf[m.end():]
+					m = re.search(";",self.buf)
+#		except socket.timeout,e:
+#			print 'DEBUG: socket timeout'
+#			self.running = False
+#			pass
 		except socket.error,e:
+			print 'DEBUG: socket error'
+			self.running = False
 			if e[0] not in [11,errno.EWOULDBLOCK]:
 				raise
-
-		while True:
-			m = re.search(";",self.buf)
-			if m:
-				command = self.buf[:m.end()]
-				self.messages.append(eventTypes[command[0]](command))
-				self.buf = self.buf[m.end():]
-			else:
-				return
+			
+	def stopRun(self):
+		self.running = False
+		self.socket.close()
+		
+	def isRunning(self):
+		return self.running
+		
+	def addMessage(self, message):
+		self.messages.append(message)
 
 	def hasMessage(self):
 		return len(self.messages) > 0

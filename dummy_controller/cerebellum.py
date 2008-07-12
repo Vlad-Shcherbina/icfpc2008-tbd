@@ -5,7 +5,7 @@ from numpy.linalg import *
 from protocol import *
 
 
-visualize = True
+visualize = False
 
 if visualize:
 	from visualizer import Visualizer
@@ -50,7 +50,7 @@ class Cerebellum(object):
 			self.vis.start()
 
 	def update(self):
-		self.connection.update()
+#		self.connection.update()
 		while self.connection.hasMessage():
 			m = self.connection.popMessage()
 			self.preprocessMessage(m)

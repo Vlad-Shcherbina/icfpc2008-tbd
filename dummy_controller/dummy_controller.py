@@ -17,9 +17,10 @@ port = int(sys.argv[2])
 
 conn = Connection(ip,port)
 cereb = Cerebellum(conn)
+conn.start()
 
 t = time.clock()
-while True:
+while conn.isRunning():
 	if time.clock() > t+0.5:
 		t = time.clock()
 		cereb.printInfo()
