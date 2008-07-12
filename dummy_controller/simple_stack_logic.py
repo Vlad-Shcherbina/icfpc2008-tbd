@@ -13,22 +13,29 @@ def calc_hit(x1, y1, x2, y2, px, py, R, r, g):
     c2 = (x1-px)**2 + (y1-py)**2
     b = sqrt(b2)
     c = sqrt(c2)
-    cosalpha = (b2 + c2 - a2) / (2 * b * c)
-    if (cosalpha < 0): return None # does not hit
-    assert cosalpha <= 1
-    assert cosalpha >= -1
+    cosalpha = (b2 + c2 - a2) / (2 * b * c) # b != 0 because then we reached the target; c != 0 because then we died 
+    if (cosalpha < 0.0): return None # does not hit
+    assert cosalpha <= 1.01
+    assert cosalpha >= -1.01
     l = c * cosalpha
     if l > b: return None # does not hit
-    sinalpha = sqrt(1 - cosalpha**2)
-    assert sinalpha <= 1
-    assert sinalpha >= -1
+    sinalpha2 = 1.0 - cosalpha**2
+    if sinalpha2 < 0: sinalpha2 = 0
+    sinalpha = sqrt(sinalpha2)
+    assert sinalpha <= 1.01
+    assert sinalpha >= -1.01
     h = abs(c * sinalpha)
     if h > R: return None # does not hit
     hx = x1 + ((x2 - x1) * l) / b;
     hy = y1 + ((y2 - y1) * l) / b;
-    ox = px + ((hx - px) * (R + g + r)) / h;
-    oy = py + ((hy - py) * (R + g + r)) / h;
-    d = l - sqrt(R**2 - h**2)
+    if h == 0:
+        ox = px + ((y2 - y1) * (R + g + r)) / b;
+        oy = py + ((x1 - x2) * (R + g + r)) / b;
+        d = l - sqrt(R**2 - h**2)
+    else:
+        ox = px + ((hx - px) * (R + g + r)) / h;
+        oy = py + ((hy - py) * (R + g + r)) / h;
+        d = l - sqrt(R**2 - h**2)
     return (d, ox, oy)
 
 class SimpleStackLogic(object):
@@ -56,7 +63,8 @@ class SimpleStackLogic(object):
         ox_min = None
         oy_min = None
         for o in self.mymap.staticObjects:
-            rslt = calc_hit(x1, y2, x2, y2, o.x, o.y, o.radius, 0.5, 0.1)
+            print "calc object "  + repr(o)
+            rslt = calc_hit(x1, y1, x2, y2, o.x, o.y, o.radius, 0.5, 0.1)
             if not (rslt is None):
                 d, ox, oy = rslt
                 if (d_min is None) or (d < d_min):
