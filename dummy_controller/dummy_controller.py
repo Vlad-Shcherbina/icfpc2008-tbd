@@ -1,4 +1,7 @@
 #!/usr/bin/python
+import psyco
+psyco.full()
+
 
 #visualize = True
 visualize = eval(open("visualize.config").readline())

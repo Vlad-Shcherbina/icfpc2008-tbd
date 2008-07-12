@@ -185,12 +185,13 @@ class Cerebellum(object):
 		
 		#update reception latency
 		if self.clockOffset == None:
-			self.clockOffset = FOFilter(1.0, time.clock() - tele.timeStamp);
+			self.clockOffset = FOFilter(0.0, time.clock() - tele.timeStamp);
 			self.avgReceptionLatency = FOFilter(0.1, 0.0)
 		else:
-			newOffset = time.clock() - tele.timeStamp
+			clock = time.clock()
+			newOffset =  clock - tele.timeStamp
 			diff = self.clockOffset.value - newOffset 
-			print self.clockOffset, diff
+			print "%6.3f %6.3f %6.3f" % (clock, self.clockOffset.value, diff)
 			self.avgReceptionLatency.next(abs(diff))
 			self.clockOffset.next(newOffset)
 			
