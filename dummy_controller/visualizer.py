@@ -91,7 +91,7 @@ class Visualizer(Thread):
 		glutInit([])
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
 		glutInitWindowSize(800,800)
-		glutCreateWindow(name)
+		self.window = glutCreateWindow(name)
 		glEnable(GL_DEPTH_TEST)
 
 		glClearColor(0.,0.,0.,1.)
@@ -104,7 +104,10 @@ class Visualizer(Thread):
 		
 	def idle(self):
 		if self.terminate:
-			print "terminate"
+			if self.window:
+				glutDestroyWindow(self.window)
+				self.window = None
+			return
 			#exit()
 		time.sleep(0.01)
 		glutPostRedisplay()

@@ -62,8 +62,12 @@ if visualize:
 	vis.start()
 
 
-
-
 conn.start()
 cereb.mainLoop()
+print "dummy_controller terminating"
+conn.close()
+
+if visualize:
+	vis.terminate = True
+	vis.join()
 sys.exit(0)
