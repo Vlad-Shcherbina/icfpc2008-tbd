@@ -5,7 +5,7 @@ from numpy.linalg import *
 
 from protocol import *
 
-maxRuns = 1
+maxRuns = 3
 
 class MinSQ(object):
 	"""Class for minimal square optimization of given constraints"""
@@ -35,6 +35,11 @@ def subtractAngles(a,b):
 	return res
 
 
+#class RotationPredictor(object):
+#	def __init__(self,dir,rotSpeed):
+#		self.dir = dir
+#		self.rotSpeed = rotSpeed
+
 class Cerebellum(object):
 	"""
 	Cerebellum is responsible for movement parameters (such as drag) estimation
@@ -57,7 +62,10 @@ class Cerebellum(object):
 
 		#initialize esteems
 		self.minSQ = MinSQ(3)
-		self.rotAccel = 0
+		self.rotAccel = 720
+		self.latency = 0.02 # TODO: estimate it correctly
+
+		self.command = None
 
 	def registerMessageHandler(self,handler):
 		"""
@@ -77,10 +85,35 @@ class Cerebellum(object):
 			self.processMessage(m)
 			self.messages.append(m)
 
+	def cmd(self,command):
+		self.connection.sendCommand(command)
+
+	def rotateTo(self,desiredDir):
+		minDt = 0.05
+		desiredDir = self.command[1]
+		dDir = subtractAngles(desiredDir,self.teles[-1].dir)
+		if dDir*(dDir-self.rotSpeed**2/self.rotAccel/2) <= 0:
+			return
+		elif dDir*self.rotSpeed>=0:
+			
+
+			self.cmd("l;")
+			time.sleep(minDt)
+			self.cmd("r;")
+		else:
+			self.cmd("r;")
+			time.sleep(minDt)
+			self.cmd("l;")
+
+
 	def mainLoop(self):
 		while True:
-			time.sleep(0.005)
 			self.update()
+			if self.command!=None and len(self.teles)>=2:
+				if self.command[0] == "rotateTo":
+					#self.rotateTo(self.command[1])
+					pass
+			time.sleep(0.01)
 
 	def newRun(self):
 		self.runInProgress = False
@@ -99,6 +132,7 @@ class Cerebellum(object):
 
 	def processTelemetry(self,tele):
 		"""message handler"""
+
 		self.teles.append(tele)
 		self.teles = self.teles[-3:] # keep last three tele's
 		# so teles[-1] is current tele,
@@ -108,10 +142,8 @@ class Cerebellum(object):
 		if self.numTeles%20 == 0:
 			self.printInfo()
 
-		self.connection.sendCommand(
-			choice(["a","a","b",""]) +
-			choice(["l","l","l"]) + ";")
-
+		self.cmd(choice(["al;","al;","br;",]))
+		
 		if len(self.teles) >= 2:
 			dt = tele.timeStamp-self.teles[-2].timeStamp
 
@@ -136,14 +168,17 @@ class Cerebellum(object):
 			rotSpeed = \
 				subtractAngles(tele.dir,self.teles[-2].dir)/ \
 				(dt+1e-6)
+			self.rotSpeed = rotSpeed
 			prevDt=self.teles[-2].timeStamp-self.teles[-3].timeStamp
 			prevRotSpeed = subtractAngles(
 							self.teles[-2].dir,
 							self.teles[-3].dir)/(prevDt+1e-6)
 			if dt+prevDt>1e-8:
-				self.rotAccel = max(
-					self.rotAccel,
-					abs((rotSpeed-prevRotSpeed)/(dt+prevDt)*2) )
+				curRotAccel = (rotSpeed-prevRotSpeed)/(dt+prevDt)*2
+				if self.rotAccel==720: # initial value
+					self.rotAccel = curRotAccel
+				else:
+					self.rotAccel = max(self.rotAccel,abs(curRotAccel))
 
 
 

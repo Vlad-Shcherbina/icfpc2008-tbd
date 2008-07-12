@@ -28,8 +28,9 @@ class Visualizer(Thread):
 	def run(self):
 		glutInit([])
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
-		glutInitWindowSize(400,400)
+		glutInitWindowSize(800,800)
 		glutCreateWindow(name)
+		glEnable(GL_DEPTH_TEST)
 
 		glClearColor(0.,0.,0.,1.)
 		glutDisplayFunc(self.display)
@@ -54,16 +55,19 @@ class Visualizer(Thread):
 		t = self.tele
 		d = self.initData
 		glPushMatrix()
-		glTranslatef(t.x,t.x,0)
+		glTranslatef(t.x,t.y,0)
 		glColor3f(1,1,1)
 		glutSolidSphere(0.5,20,10)
 
 		glRotatef(t.dir,0,0,1)
-		smallAxis = math.sqrt(d.maxSensor*d.minSensor)
-		glScalef(d.maxSensor+d.minSensor,smallAxis,0.001)
-		glTranslatef((d.maxSensor-d.minSensor)*0.5,0,0)
+		longAxis = (d.maxSensor+d.minSensor)*0.5
+		shortAxis = math.sqrt(d.maxSensor*d.minSensor)
+		glTranslatef((d.maxSensor-d.minSensor)*0.5,0,-5)
+		glScalef(longAxis,shortAxis,0.001)
 		glColor3f(0.5,0.5,0.5)
+		glScalef(1,1,0.001)
 		circle(0,0,1)
+		
 		glPopMatrix()
 
 	def staticObject(self,obj,highlight=False):
@@ -75,8 +79,8 @@ class Visualizer(Thread):
 			glColor3f(1,1,1)
 		circle(obj.x,obj.y,obj.radius)
 		if highlight:
-			for i in range(10):
-				circle(obj.x,obj.y,obj.radius*i/10)
+			for i in range(1,5):
+				circle(obj.x,obj.y,obj.radius*i/5)
 			
 	def martian(self,martian):
 		glPushMatrix()
@@ -104,11 +108,11 @@ class Visualizer(Thread):
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 		glPushMatrix()
 
-		if self.cerebellum.runInProgress:
+		if self.cerebellum.runInProgress and hasattr(self,"tele"):
 			self.rover()
 			for o in self.tele.objects:
 				if isinstance(o,StaticObject):
-					#self.staticObject(o,highlight=True)
+					self.staticObject(o,highlight=True)
 					pass
 				else:
 					self.martian(o)

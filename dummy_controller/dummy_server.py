@@ -29,7 +29,7 @@ rotAccel = 50
 maxTurn = 15
 maxHardTurn = 30
 
-conn.send("I 20 20 999.9 1 2 %s %s %s ;" %
+conn.send("I 20 20 999.9 0.5 3 %s %s %s ;" %
 			(math.sqrt(accel/drag),maxTurn,maxHardTurn) )
 
 x = 0
@@ -43,7 +43,7 @@ rotSpeed = 0
 for i in range(1):
 	t = 0
 	time.sleep(0.2)
-	for i in range(100):
+	for i in range(1000):
 		try:
 			data += conn.recv(1024)
 			time.sleep(0.01)
@@ -58,7 +58,7 @@ for i in range(1):
 				break
 			data = data[m.end():]
 			command = m.group()
-			print command,
+#			print command,
 			if command.find("a") != -1 and acc<1:
 				acc += 1
 			elif command.find("b") != -1 and acc>-1:
@@ -70,6 +70,7 @@ for i in range(1):
 				rot -= 1
 
 		ctl = "b-a"[acc+1]+"Ll-rR"[rot+2]
+		print ctl
 		conn.send(
 			"T %s %s %s %s %s %s "%(t*1000,ctl,x,y,angle,v) +
 			"b -4.000 7.000 1.000 " +

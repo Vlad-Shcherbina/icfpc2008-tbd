@@ -1,2 +1,2 @@
-dummy_server.py >o 2>o2
+dummy_server.py
 exit
