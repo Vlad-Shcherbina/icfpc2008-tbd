@@ -8,8 +8,10 @@ import time
 
 from protocol import *
 from cerebellum import Cerebellum
-from visualizer import Visualizer
 from static_map import StaticMap
+
+if visualize:
+	from visualizer import Visualizer
 
 class TestHandler(object):
 	def processInitData(self,initData):
