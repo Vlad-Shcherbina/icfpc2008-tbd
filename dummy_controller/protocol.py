@@ -210,10 +210,8 @@ class Connection(Thread):
 #			self.running = False
 #			pass
 		except socket.error,e:
-			print 'DEBUG: socket error'
+			print 'DEBUG: socket closed'
 			self.running = False
-			if e[0] not in [11,errno.EWOULDBLOCK]:
-				raise
 			
 	def stopRun(self):
 		self.running = False
