@@ -14,6 +14,7 @@ import time
 from protocol import *
 from cerebellum import Cerebellum
 from static_map import StaticMap
+from simple_stack_logic import SimpleStackLogic
 
 if visualize:
 	from visualizer import Visualizer
@@ -52,6 +53,9 @@ cereb.command = ("moveTo",0,0)
 
 staticMap = StaticMap()
 cereb.registerMessageHandler(staticMap)
+
+logic = SimpleStackLogic(cereb, map)
+cereb.registerMessageHandler(logic)
 
 if visualize:
 	vis = Visualizer()
