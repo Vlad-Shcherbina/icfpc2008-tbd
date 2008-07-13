@@ -50,7 +50,7 @@ class TestHandler(object):
         pass
 #        print "tele"
     def processEvent(self,event):
-        print "event",e.tag
+        print "event",event.tag
 #        print "event"
     def runFinish(self,runNumber):
         print "run %s finished"%runNumber
