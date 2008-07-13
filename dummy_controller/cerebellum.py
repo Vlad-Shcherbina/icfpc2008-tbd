@@ -29,7 +29,7 @@ class Cerebellum(object):
 
 		self.currentRun = 0
 		self.messages = []
-		self.prepairForNewRun()
+		self.prepareForNewRun()
 
 		self.handlers = []
 		self.registerMessageHandler(self)
@@ -101,22 +101,28 @@ class Cerebellum(object):
 	def mainLoop(self):
 		self.connection.start()
 		# to allow connection to startup
-		time.sleep(0.5)
-		while self.connection.running:
+		t = time.clock()
+		
+		while self.connection.state == ConState_Initializing:
+			if (time.clock() - t > 20):
+				self.connection.close()
+				self.connection.join()
+				return
 			time.sleep(0.002)
+			
+		while self.connection.state == ConState_Running:
 			for h in self.handlers:
 				if hasattr(h,"idle"):
 					h.idle()
-			running = self.connection.isRunning()
 			while self.connection.hasMessage():
 				m = self.connection.popMessage()
 				self.processMessage(m)
 				#self.messages.append(m) # memory leak was here I think
-			if not running:
-				break
+			time.sleep(0.002)
+			
 		self.connection.join()
 
-	def prepairForNewRun(self):
+	def prepareForNewRun(self):
 		"""
 		As problem document states, at this moment we have at least 1 second 
 		before run start. But... everybody lies
@@ -203,7 +209,7 @@ class Cerebellum(object):
 				print "maxRuns reached"
 				self.connection.close()
 				return
-			self.prepairForNewRun()
+			self.prepareForNewRun()
 
 	def printInfo(self):
 		if not self.runInProgress:

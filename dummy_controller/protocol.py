@@ -164,6 +164,10 @@ eventTypes = {
 ###########
 # networking tools
 
+ConState_Initializing = 0
+ConState_Running = 1
+ConState_Closed = 2 
+
 class Connection(Thread):
 	"""
 	This class is responsible for connection with the rover.
@@ -174,13 +178,16 @@ class Connection(Thread):
 
 	`update` have to be called periodically
 	"""
-	def __init__(self,ip,port):
+	
+	__slots__ = ("socket", "state", "abortRequested", "buf", "messages", "lock", "conparams") 
+	
+	def __init__(self, ip, port):
 		Thread.__init__(self)
-
-		self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-#		self.socket.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
-		self.socket.connect((ip,port))
-		self.socket.setblocking(1)
+		
+		self.conparams = (ip, port)
+		self.socket = None
+		self.state = ConState_Initializing
+		self.abortRequested = False
 
 		self.buf = ""
 		self.messages = []
@@ -191,32 +198,37 @@ class Connection(Thread):
 		receive information from rover (if any) and 
 		put it into `messages` field
 		"""
-		self.running = True
-		while self.running:
-			try:
-				received = self.socket.recv(1024)
-			except socket.error,e:
-				print 'proto: DEBUG: socket error on receive'
-				self.running = False
-				#raise
-			if len(received) == 0: # socket closed
-				self.running = False
-				break
-			self.buf += received
-			m = re.search(";",self.buf)
-			while m:
-				command = self.buf[:m.end()]
-				self.addMessage(eventTypes[command[0]](command))
-				self.buf = self.buf[m.end():]
-				m = re.search(";",self.buf)
-		print "proto: thread normally terminated"
+		try:
+			self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
+			#self.socket.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
+			self.socket.setblocking(1)
+			self.socket.connect(self.conparams)
 			
-	def stopRun(self):
-		self.running = False
-		self.socket.close()
-		
-	def isRunning(self):
-		return self.running
+			self.state = ConState_Running
+			while not self.abortRequested:
+				try:
+					received = self.socket.recv(1024)
+				except socket.error,e:
+					print 'protocol.py: DEBUG: socket error on receive'
+					break;
+				
+				if len(received) == 0: # socket closed
+					break
+				
+				self.buf += received
+				m = re.search(";",self.buf)
+				while m:
+					command = self.buf[:m.end()]
+					self.addMessage(eventTypes[command[0]](command))
+					self.buf = self.buf[m.end():]
+					m = re.search(";",self.buf)
+					
+			print "protocol.py: thread normally terminated"
+		finally:
+			self.state = ConState_Closed
+			if self.socket != None:
+				self.socket.close()
+			
 		
 	def addMessage(self, message):
 		self.lock.acquire(True)
@@ -240,8 +252,10 @@ class Connection(Thread):
 		if command=="":
 			return
 		assert re.match(r"([ab]?[lr]?;)+$",command)
-		if not self.running:
+		
+		if self.state != ConState_Running:
 			return
+		
 		try:
 			self.socket.sendall(command)
 		except:
@@ -249,6 +263,4 @@ class Connection(Thread):
 			pass
 
 	def close(self):
-		self.running = False
-		self.socket.close()
-	
+		self.abortRequested = True
