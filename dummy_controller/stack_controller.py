@@ -4,16 +4,18 @@ psyco.full()
 
 from misc import *
 from static_map import StaticMap
+from simple_stack_logic import SimpleStackLogic
 from controller import connection,cerebellum,visualize,mainLoop
 
 ##############
 
 cerebellum.registerMessageHandler(TestHandler())
 
-#cerebellum.command = ("moveTo",0,0)
-
 staticMap = StaticMap()
 cerebellum.registerMessageHandler(staticMap)
+
+logic = SimpleStackLogic(cerebellum,staticMap)
+cerebellum.registerMessageHandler(logic)
 
 if visualize:
 	from visualizer import Visualizer

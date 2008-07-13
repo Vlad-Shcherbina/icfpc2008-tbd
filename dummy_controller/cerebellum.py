@@ -1,55 +1,13 @@
 from uuid import _last_timestamp
 import time
 from random import choice
-from numpy import *
-from numpy.linalg import *
 from math import *
 
 from protocol import *
+from misc import *
 
 maxRuns = 6
 
-
-class MinSQ(object):
-	"""Class for minimal square optimization of given constraints"""
-	def __init__(self,n):
-		self.n = n
-		self.a = zeros((n,n))
-		self.b = zeros((n,))
-	def addConstraint(self,c,d):
-		"""Takes constraint of the form c*x=d into account"""
-		m = array([[a*b for b in c] for a in c])
-		self.a += m
-		self.b += c*d
-			
-	def solve(self):
-		try:
-			self.x = solve(self.a,self.b)
-		except LinAlgError:
-			self.x = zeros((self.n,))
-			
-
-def subtractAngles(a,b):
-	res = a-b
-	while res < -180:
-		res += 360
-	while res > 180:
-		res -= 360
-	return res
-
-def lerp(a, b, q):
-	return a * (1 - q) + b * q
-
-class FOFilter(object):
-	def __init__(self, quotient, value = 0.0):
-		self.quotient = quotient
-		self.value = value
-	
-	def next(self, value):
-		self.value = lerp(self.value, value, self.quotient)
-	
-	def __str__(self):
-		return str(self.value)
 
 #class RotationPredictor(object):
 #	def __init__(self,dir,rotSpeed):
@@ -151,11 +109,6 @@ class Cerebellum(object):
 	def mainLoop(self):
 		while self.connection.isRunning():
 			self.update()
-			if self.command!=None and len(self.teles)>=2:
-				if self.command[0] == "rotateTo":
-					self._rotateTo(self.command[1],self.command[2])
-				elif self.command[0] == "moveTo":
-					self._moveTo(self.command[1],self.command[2])
 			time.sleep(0.01)
 
 	def newRun(self):
@@ -182,6 +135,13 @@ class Cerebellum(object):
 
 	def processTelemetry(self,tele):
 		"""message handler"""
+
+		# control
+		if self.command!=None and len(self.teles)>=2:
+			if self.command[0] == "rotateTo":
+				self._rotateTo(self.command[1],self.command[2])
+			elif self.command[0] == "moveTo":
+				self._moveTo(self.command[1],self.command[2])
 		
 		#update reception latency
 		if self.clockOffset == None:

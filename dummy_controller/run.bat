@@ -1,2 +1,2 @@
 start ds.bat
-dummy_controller.py localhost 12345
+stack_controller.py localhost 12345 >log/o

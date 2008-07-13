@@ -1,64 +1,30 @@
 #!/usr/bin/python
-import sys
-
 import psyco
 psyco.full()
 
-visualize = eval(open("visualize.config").readline())
-
-import time
-
-from protocol import *
-from cerebellum import Cerebellum
+from misc import *
 from static_map import StaticMap
-from simple_stack_logic import SimpleStackLogic
+from controller import connection,cerebellum,visualize,mainLoop
 
-from visualizer import Visualizer
-
-
-class TestHandler(object):
-	def processInitData(self,initData):
-		pass
-	def runStart(self,runNumber):
-		print "run %s started"%runNumber
-	def processTelemetry(self,tele):
-		pass
-	def processEvent(self,event):
-		pass
-	def runFinish(self,runNumber):
-		print "run %s finished"%runNumber
-
-##################
-# main
-if len(sys.argv) != 3:
-	print "specify ip and port"
-	exit(1)
-ip = sys.argv[1]
-port = int(sys.argv[2])
-
-conn = Connection(ip, port)
-cereb = Cerebellum(conn)
+##############
 
 staticMap = StaticMap()
-cereb.registerMessageHandler(staticMap)
+cerebellum.registerMessageHandler(staticMap)
 
 keyMapping = { 
-	"w":(lambda: conn.sendCommand("a;")),
-	"s":(lambda: conn.sendCommand("b;")),
-	"a":(lambda: conn.sendCommand("l;")),
-	"d":(lambda: conn.sendCommand("r;")),
+	"w":(lambda: connection.sendCommand("a;")),
+	"s":(lambda: connection.sendCommand("b;")),
+	"a":(lambda: connection.sendCommand("l;")),
+	"d":(lambda: connection.sendCommand("r;")),
 	} 
 
 def keyboardHandler(key, x, y):
 	if keyMapping.has_key(key):
 		keyMapping[key]()
 	
+if visualize:
+	from visualizer import Visualizer
+	vis = Visualizer(cerebellum, staticMap, keyboardHandler)
+	vis.start()
 
-vis = Visualizer(cereb, staticMap, keyboardHandler)
-vis.start()
-
-
-conn.start()
-cereb.mainLoop()
-sys.exit(0)
-
+mainLoop()
