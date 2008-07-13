@@ -61,7 +61,7 @@ class Cerebellum(object):
 
 	def _cmd(self,command):
 		self.connection.sendCommand(command)
-		self.commandHistory.cmd(command)
+#		self.commandHistory.cmd(command)
 		
 	def setForwardControl(self,v):
 		v = max(min(v,1),-1)
@@ -133,13 +133,16 @@ class Cerebellum(object):
 				if hasattr(h,"idle"):
 					h.idle()
 			running = self.connection.state == ConState_Running
+			
 			while self.connection.hasMessage():
 				m = self.connection.popMessage()
 				self.processMessage(m)
-				#self.messages.append(m) # memory leak was here I think
+			else:
+				time.sleep(0.002)
+
+				
 			if not running:
 				break
-			time.sleep(0.002)
 			
 		self.connection.join()
 
@@ -164,7 +167,7 @@ class Cerebellum(object):
 		self.numTimeStamps = 0
 		self.curTime = 0
 		
-		self.commandHistory = CommandHistory()
+#		self.commandHistory = CommandHistory()
 		               
 	def processInitData(self,initData):
 		"""message handler"""
@@ -181,9 +184,8 @@ class Cerebellum(object):
 		
 		# clean up commands
 						
-		self.commandHistory.processTelemetry(tele)
-			
-		print self.commands
+#		self.commandHistory.processTelemetry(tele)
+#		print self.commands
 		
 		# control
 		if self.command!=None and len(self.teles)>=2:
@@ -281,7 +283,7 @@ class CommandHistory(object):
 					if self.commands[i][1] == command and \
 						self.commands[i][2] != "annihilated":
 						cmd = self.commands.pop(i)
-						print cmd
+#						print cmd
 						if cmd[2] == "current":
 							# command was processed in closed tele
 							statistics.goodLatency(t-cmd[0])
@@ -297,6 +299,7 @@ class CommandHistory(object):
 						cmd = self.commands.pop(i)
 						return
 				assert False
+				
 			for i in range(cur.forwardControl-self.prev.forwardControl):
 				popCommand("a")
 			for i in range(self.prev.forwardControl-cur.forwardControl):

@@ -3,7 +3,7 @@ import os
 goodLatencies = []
 
 def goodLatency(lat):
-    print "good",lat
+#    print "good",lat
     goodLatencies.append(lat)
     pass
 
@@ -11,7 +11,7 @@ def goodLatency(lat):
 badLatencies = []
 
 def badLatency(lat):
-    print "baad",lat
+#    print "baad",lat
     badLatencies.append(lat)
     pass
 

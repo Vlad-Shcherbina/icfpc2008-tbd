@@ -38,6 +38,14 @@ def convertFloats(obj,fields):
 	for f in fields:
 		setattr(obj,f,float(getattr(obj,f)))
 
+
+def slotsToDict(object):
+	d = {}
+	for attr in object.__class__.__slots__:
+		d[attr] = getattr(object, attr)
+	return d;
+		
+
 class InitData(object):
 	"""
 	Fields:
@@ -62,10 +70,10 @@ class StaticObject(object):
 	Fields:
 		x,y,radius
 	"""
+	
 	def __eq__(self,other):
 		if not isinstance(other,StaticObject):
 			return False
-		eps=1e-6
 		return self.kind==other.kind and \
 			self.x==other.x and \
 			self.y==other.y and \
@@ -168,6 +176,8 @@ ConState_Initializing = 0
 ConState_Running = 1
 ConState_Closed = 2 
 
+messageBufferSize = 128
+
 class Connection(Thread):
 	"""
 	This class is responsible for connection with the rover.
@@ -179,7 +189,9 @@ class Connection(Thread):
 	`update` have to be called periodically
 	"""
 	
-	__slots__ = ("socket", "state", "abortRequested", "buf", "messages", "lock", "conparams") 
+	__slots__ = ("socket", "state", "abortRequested", "buf", 
+				 "conparams", "messageBuffer", "writePtr", "readPtr")
+	#"messages", "lock"  
 	
 	def __init__(self, ip, port):
 		Thread.__init__(self)
@@ -190,8 +202,12 @@ class Connection(Thread):
 		self.abortRequested = False
 
 		self.buf = ""
-		self.messages = []
-		self.lock = Semaphore()
+#		self.messages = []
+#		self.lock = Semaphore()
+
+		self.writePtr = 0
+		self.readPtr = 0
+		self.messageBuffer = [None for i in range(messageBufferSize)]
 
 	def run(self):
 		"""
@@ -200,7 +216,7 @@ class Connection(Thread):
 		"""
 		try:
 			self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
-			#self.socket.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
+			self.socket.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
 			self.socket.setblocking(1)
 			self.socket.connect(self.conparams)
 			
@@ -231,21 +247,55 @@ class Connection(Thread):
 			
 		
 	def addMessage(self, message):
-		self.lock.acquire(True)
-		self.messages.append(message)
-		self.lock.release()
+		self.messageBuffer[self.writePtr] = message
+
+		tmp = self.writePtr + 1
+		if tmp >= messageBufferSize:
+			tmp = 0
+		
+		if tmp != self.readPtr:
+			self.writePtr = tmp
+		else:
+			# we have a congestion. but we won't dump core!
+			print "WARNING! Message buffer congestion!"
+			
+#		self.lock.acquire(True)
+#		self.messages.append(message)
+#		self.lock.release()
+		
 
 	def hasMessage(self):
-		self.lock.acquire(True)
-		rt = len(self.messages) > 0
-		self.lock.release()
-		return rt
+		return self.writePtr != self.readPtr
+	
+#		self.lock.acquire(True)
+#		rt = len(self.messages) > 0
+#		self.lock.release()
+#		return rt
+
 
 	def popMessage(self):
-		self.lock.acquire(True)
-		rt = self.messages.pop(0)
-		self.lock.release()
-		return rt
+		"""
+		Returns None if there is no messages in queue
+		"""
+		
+		if self.writePtr == self.readPtr:
+			return None
+		
+		msg = self.messageBuffer[self.readPtr]
+		self.messageBuffer[self.readPtr] = None #we don't want messages lying around
+		
+		tmp = self.readPtr + 1
+		if tmp >= messageBufferSize:
+			tmp = 0
+		self.readPtr = tmp
+		
+		return msg
+		
+#		self.lock.acquire(True)
+#		rt = self.messages.pop(0)
+#		self.lock.release()
+#		return rt
+
 
 	def sendCommand(self,command):
 		"""Send a single command to the rover"""
