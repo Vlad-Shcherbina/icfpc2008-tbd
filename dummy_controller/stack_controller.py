@@ -23,3 +23,7 @@ if visualize:
 	vis.start()
 
 mainLoop()
+
+if visualize:
+    vis.terminate = True
+    vis.join()
