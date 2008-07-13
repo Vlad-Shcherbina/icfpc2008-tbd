@@ -38,7 +38,7 @@ class Stater(object):
 		"""message handler"""
 		self.state = 0
 		self.sendDelayIndex = 0
-		self.maxSendDelayIndex = 10 
+		self.maxSendDelayIndex = 5 
 		self.sendDelayStep = 0.01
     	
 	def processTelemetry(self,tele):
