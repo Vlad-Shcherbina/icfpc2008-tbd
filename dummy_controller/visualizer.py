@@ -12,7 +12,6 @@ from OpenGL.GLU import *
 from OpenGL.GL import *
 
 from protocol import *
-from predictor import *
 
 
 name = 'suka glut'
@@ -114,16 +113,6 @@ class Visualizer(Thread):
 		circle(0,0,1)
 
 		glPopMatrix()
-		
-		phys = PhysicalValues()
-		rover = RoverState(self.tele)
-		commands = []
-		trace = predict(phys,rover,commands,0.1,5)
-		glBegin(GL_POINTS)
-		glColor3f(1,1,0)
-		for p in trace:
-			glVertex3f(p.x,p.y,1)
-		glEnd()
 		
 	def testIntersection(self):
 		for t in range(2): 
