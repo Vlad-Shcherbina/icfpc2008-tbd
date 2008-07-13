@@ -115,6 +115,9 @@ class Cerebellum(object):
 			self.forwardControl = choice([1]*8+[0]+[-1])
 		else:
 			self.forwardControl = choice([0]*8+[1]+[-1])
+	
+	def getSomeSleep():
+		time.sleep(0.002)
 
 	def mainLoop(self):
 		self.connection.start()
@@ -138,7 +141,7 @@ class Cerebellum(object):
 				m = self.connection.popMessage()
 				self.processMessage(m)
 			else:
-				time.sleep(0.002)
+				getSomeSleep()
 
 				
 			if not running:
