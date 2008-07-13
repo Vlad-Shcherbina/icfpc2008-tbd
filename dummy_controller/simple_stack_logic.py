@@ -15,7 +15,7 @@ def sort(x1, y1, x2, y2):
     else:
         min_y = y2
         max_y = y1
-    return min_x, min_y, max_y, max_y
+    return min_x, min_y, max_x, max_y
 
 def _getObjects(node, min_x, min_y, max_x, max_y):
     """selects smallest subnode of a static map tree containing both points and returns its objects.
