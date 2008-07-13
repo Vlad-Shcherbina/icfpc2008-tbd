@@ -115,6 +115,9 @@ class Node(object):
 		glVertex2f(-1, 1)
 		glEnd()
 		glPopMatrix()
+		for obj in self.objects:
+			glColor3f(0,1,1)
+			circle(obj.x+0.2,obj.y,obj.radius)
 
 
 class StaticMap(object):
