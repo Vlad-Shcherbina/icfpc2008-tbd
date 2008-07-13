@@ -34,8 +34,6 @@ class Cerebellum(object):
 		self.handlers = []
 		self.registerMessageHandler(self)
 
-		#initialize esteems
-		self.minSQ = MinSQ(3)
 		self.rotAccel = 720
 		self.latency = 0.02 # TODO: estimate it correctly
 
@@ -182,22 +180,6 @@ class Cerebellum(object):
 		if len(self.teles) >= 2:
 			dt = tele.timeStamp-self.teles[-2].timeStamp
 
-			accelCmd = self.teles[-2].ctl[0]
-			rotCmd = self.teles[-2].ctl[1]
-
-			# form constraint of the form of the motion equation
-			# dv = dt*accel - dt*drag*speed*speed
-			dSpeed = tele.speed-self.teles[-2].speed
-			if accelCmd=="a":
-				coeffs = [dt,0]
-			elif accelCmd=="-":
-				coeffs = [0,0]
-			elif accelCmd=="b":
-				coeffs = [0,-dt]
-			self.minSQ.addConstraint(
-				array(coeffs+[-dt*self.teles[-2].speed**2]),
-				dSpeed )
-
 		if len(self.teles) >= 3:
 			# calculate angular acceleration
 			rotSpeed = \
@@ -249,19 +231,9 @@ class Cerebellum(object):
 				return
 			self.prepairForNewRun()
 
-	def esteemParams(self):
-		self.minSQ.solve()
-		self.accel = self.minSQ.x[0]
-		self.brake = self.minSQ.x[1]
-		self.drag = self.minSQ.x[2]
-
 	def printInfo(self):
 		if not self.runInProgress:
 			return
-		self.esteemParams()
 		print "Estimates:"
-		print "  accel",self.accel
-		print "  brake",self.brake
-		print "  drag",self.drag
 		print "  rotAccel",self.rotAccel
-		print "  receptionLatency",self.avgReceptionLatency
+		print "  receptionLatency",self.avgReceptionLatency        

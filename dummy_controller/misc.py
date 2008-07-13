@@ -16,8 +16,9 @@ class MinSQ(object):
     def solve(self):
         try:
             self.x = solve(self.a,self.b)
+            return True
         except LinAlgError:
-            self.x = zeros((self.n,))
+            return False
 
 def subtractAngles(a,b):
     res = a-b
