@@ -2,9 +2,12 @@ from uuid import _last_timestamp
 import time
 from random import choice
 from math import *
+from threading import Semaphore
 
 from protocol import *
 from misc import *
+from predictor import *
+import statistics
 
 maxRuns = 6
 
@@ -38,7 +41,10 @@ class Cerebellum(object):
 
 		self.command = None
 		
+		self.commandsSemaphore = Semaphore()
+		
 		self.clockOffset = None
+		
 		self.avgReceptionLatency = None
 		
 
@@ -55,22 +61,41 @@ class Cerebellum(object):
 		"""
 		self.handlers.append(handler)
 
-	def cmd(self,command):
+	def _cmd(self,command):
+		self.commandsSemaphore.acquire()
+		for c in command:
+			if c in "ablr":
+				self.commands.append([time.clock(),c,"current"])
+		print self.commands
+		self.commandsSemaphore.release()
 		self.connection.sendCommand(command)
-
+		
 	def setForwardControl(self,v):
-		self.cmd("a;"*(v-self._forwardControl)+"b;"*(self._forwardControl-v))
+		v = max(min(v,1),-1)
+		self._cmd("a;"*(v-self._forwardControl)+"b;"*(self._forwardControl-v))
 		self._forwardControl = v
 	def getForwardControl(self):
 		return self._forwardControl
 	forwardControl = property(getForwardControl,setForwardControl)
 
 	def setTurnControl(self,t):
-		self.cmd("l;"*(t-self._turnControl)+"r;"*(self._turnControl-t))
+		t = max(min(t,2),-2)
+		self._cmd("l;"*(t-self._turnControl)+"r;"*(self._turnControl-t))
 		self._turnControl = t
 	def getTurnControl(self):
 		return self._turnControl
 	turnControl = property(getTurnControl,setTurnControl)
+
+	def cmd(self,command):
+		for c in command:
+			if c=="a":
+				self.forwardControl += 1
+			elif c=="b":
+				self.forwardControl -= 1
+			elif c=="l":
+				self.turnControl += 1
+			elif c=="r":
+				self.turnControl -= 1
 
 	def _rotateTo(self,x,y):
 		desiredDir=degrees(atan2(y-self.teles[-1].y,
@@ -110,14 +135,17 @@ class Cerebellum(object):
 				return
 			time.sleep(0.002)
 			
-		while self.connection.state == ConState_Running:
+		while True:
 			for h in self.handlers:
 				if hasattr(h,"idle"):
 					h.idle()
+			running = self.connection.state == ConState_Running
 			while self.connection.hasMessage():
 				m = self.connection.popMessage()
 				self.processMessage(m)
 				#self.messages.append(m) # memory leak was here I think
+			if not running:
+				break
 			time.sleep(0.002)
 			
 		self.connection.join()
@@ -136,6 +164,7 @@ class Cerebellum(object):
 	def runStart(self,runNumber):	
 		"""message handler"""
 		print "*"*20, "\nNew Run!\n", "*"*20
+		self.commands = []
 		self._forwardControl = 0
 		self._turnControl = 0
 
@@ -151,6 +180,77 @@ class Cerebellum(object):
 	def processTelemetry(self,tele):
 		"""message handler"""
 
+		self.timeMinusTimeStamp = time.clock()-tele.timeStamp
+		
+		# clean up commands
+		if len(self.teles)>=2:
+			t=time.clock()
+			#self.commandsSemaphore.acquire()
+			cur = RoverState(self.teles[-1])
+			prev = RoverState(self.teles[-2])
+			def popCommand(command):
+				for i in range(len(self.commands)):
+					if self.commands[i][1] == command and \
+						self.commands[i][2] != "annihilated":
+						cmd = self.commands.pop(i)
+						print cmd
+						if cmd[2] == "current":
+							# command was processed in closed tele
+							statistics.goodLatency(t-cmd[0])
+						elif cmd[2] == "outdated":
+							# was not
+							statistics.badLatency(t-cmd[0])
+						else:
+							assert False
+						return
+				for i in range(len(self.commands)):
+					if self.commands[i][1] == command and \
+						self.commands[i][2] == "annihilated":
+						cmd = self.commands.pop(i)
+						return
+				assert False
+			for i in range(cur.forwardControl-prev.forwardControl):
+				popCommand("a")
+			for i in range(prev.forwardControl-cur.forwardControl):
+				popCommand("b")
+			for i in range(cur.turnControl-prev.turnControl):
+				popCommand("l")
+			for i in range(prev.turnControl-cur.turnControl):
+				popCommand("r")
+				
+			statusChange = {
+				"current":"outdated",
+				"outdated":"outdated",
+				"annihilated":"annihilated"}
+			for c in self.commands:
+				if c[2]=="current":
+					c[2]="outdated" 
+
+			# annihilate outdated pairs
+			for pos,neg in [("a","b"),("l","r")]:
+				while True:
+					posIndex = None
+					negIndex = None
+					for i in range(len(self.commands)):
+						if posIndex is None and \
+							self.commands[i][1]==pos and \
+							self.commands[i][2]!="annihilated":
+							posIndex = i
+						if negIndex is None and \
+							self.commands[i][1]==neg and \
+							self.commands[i][2]!="annihilated":
+							negIndex = i
+					if posIndex is not None and negIndex is not None:
+						self.commands[posIndex][2]="annihilated"
+						self.commands[negIndex][2]="annihilated"
+					else:
+						break
+			#self.commandsSemaphore.release()
+						
+						
+			
+		print self.commands
+		
 		# control
 		if self.command!=None and len(self.teles)>=2:
 			if self.command[0] == "rotateTo":
@@ -187,22 +287,27 @@ class Cerebellum(object):
 		"""message dispatcher"""
 		if isinstance(message,InitData):
 			for h in self.handlers:
-				if hasattr(h, "processInitData"): h.processInitData(message)
+				if hasattr(h, "processInitData"): 
+					h.processInitData(message)
 		elif isinstance(message,Telemetry):
 			if not self.runInProgress:
 				self.runInProgress = True
 				for h in self.handlers:
-					if hasattr(h, "runStart"): h.runStart(self.currentRun)
+					if hasattr(h, "runStart"): 
+						h.runStart(self.currentRun)
 			for h in self.handlers:
-				h.processTelemetry(message)
+				if hasattr(h, "processTelemetry"):
+					h.processTelemetry(message)
 
 		elif isinstance(message,Event):
 			for h in self.handlers:
-				if hasattr(h, "processEvent"): h.processEvent(message)
+				if hasattr(h, "processEvent"): 
+					h.processEvent(message)
 
 		elif isinstance(message,EndOfRun):
 			for h in self.handlers:
-				if hasattr(h, "runFinish"): h.runFinish(self.currentRun)
+				if hasattr(h, "runFinish"): 
+					h.runFinish(self.currentRun)
 
 			self.currentRun += 1
 			if self.currentRun == maxRuns:
@@ -212,6 +317,7 @@ class Cerebellum(object):
 			self.prepareForNewRun()
 
 	def printInfo(self):
+		return
 		if not self.runInProgress:
 			return
 		print "Estimates:"

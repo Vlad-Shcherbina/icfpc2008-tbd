@@ -83,7 +83,7 @@ class Visualizer(Thread):
 				self.window = None
 			return
 			#exit()
-		time.sleep(0.01)
+		time.sleep(0.02)
 		glutPostRedisplay()
 
 	def processInitData(self,initData):

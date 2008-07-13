@@ -107,7 +107,6 @@ class Node(object):
 		glColor3f(0,0,1)
 		glTranslatef(0.5*(self.x1+self.x2),0.5*(self.y1+self.y2),0)
 		glScalef(0.5*(self.x2-self.x1),0.5*(self.y2-self.y1),1)
-		circle(0,0,1)
 		glBegin(GL_LINE_LOOP)
 		glVertex2f(-1,-1)
 		glVertex2f( 1,-1)

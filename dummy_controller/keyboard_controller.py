@@ -9,10 +9,10 @@ from predictor import *
 ##############
 
 keyMapping = { 
-	"w":(lambda: connection.sendCommand("a;")),
-	"s":(lambda: connection.sendCommand("b;")),
-	"a":(lambda: connection.sendCommand("l;")),
-	"d":(lambda: connection.sendCommand("r;")),
+	"w":(lambda: cerebellum.cmd("a;")),
+	"s":(lambda: cerebellum.cmd("b;")),
+	"a":(lambda: cerebellum.cmd("l;")),
+	"d":(lambda: cerebellum.cmd("r;")),
 	} 
 
 def keyboardHandler(key, x, y):

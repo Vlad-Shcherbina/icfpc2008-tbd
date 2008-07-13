@@ -14,8 +14,8 @@ class PredictorDrawer:
 		if not self.cerebellum.teles:
 			return		
 		rover = RoverState(self.cerebellum.teles[-1])
-		commands = []
-		trace = predict(self.physicalValues, rover, commands,0.1,5)
+		trace = predict(self.physicalValues, rover, 
+                        dt=0.1, interval=5, commands=[])
 		glBegin(GL_POINTS)
 		glColor3f(1,1,0)
 		for p in trace:
@@ -29,11 +29,11 @@ class PhysicalValues(object):
     """
     def __init__(self):
         self.maxSpeed = 0
-        self.accel = 1
-        self.brake = 1
+        self.accel = 2
+        self.brake = 3
         self.turn = 20
         self.hardTurn = 60
-        self.rotAccel = 120 # this is initial value, it is used specifically
+        self.rotAccel = 123.4 # this is initial value, it is used specifically
         self.drag = 0
         
         #initialize esteems
@@ -101,10 +101,10 @@ class PhysicalValues(object):
                     curRotAccel = (self.hist[-1].rotSpeed-self.hist[-2].rotSpeed)/\
                                   (0.5*dt2)
                     curRotAccel = abs(curRotAccel)
-                    if self.rotAccel == 120 or curRotAccel>self.rotAccel:
-                        # 120 - initial value, it can be overriden
-                        
+                    if self.rotAccel == 123.4 or curRotAccel>self.rotAccel:
+                        # 120 - initial value, it can be overriden.
                         # increase no more than 10 percents a time
+                        # to reduce damage from fluctuations
                         self.rotAccel = min(curRotAccel,self.rotAccel*1.10)
 
             
@@ -118,7 +118,7 @@ class PhysicalValues(object):
             self.brake = 0
             self.drag = self.adSQ.x[1]
             
-        self.printInfo()
+        #self.printInfo()
         
     def printInfo(self):
         print "Physical values estimates:"
@@ -128,6 +128,9 @@ class PhysicalValues(object):
         print "  rotAccel",self.rotAccel
         
 class RoverState(object):
+    """
+    Represents telemetry data, but without objects
+    """
     def __init__(self,tele):
         self.t = tele.timeStamp
         self.x = tele.x
@@ -145,8 +148,53 @@ class RoverState(object):
         else:
             self.rotSpeed = prevState.rotSpeed
 
+def roverSimulationStep(phys,rover,dt,commands,firstCommand=0):
+    #update controls
+    while firstCommand<len(commands) and commands[firstCommand][0]<rover.t:
+        for c in commands[firstCommand][1]:
+            if c=="a":
+                if rover.forwardControl<1:
+                    rover.forwardControl += 1
+            elif c=="b":
+                if rover.forwardControl>-1:
+                    rover.forwardControl -= 1
+            elif c=="l":
+                if rover.turnControl<2:
+                    rover.turnControl += 1
+            elif c=="r":
+                if rover.turnControl>-2:
+                    rover.turnControl -= 1
+        firstCommand += 1
+            
+    #update speed
+    accel = [-phys.brake,0,phys.accel][rover.forwardControl+1]
+    rover.speed += dt*accel
+    dragDelta = -rover.speed
+    maxDragDelta = dt*rover.speed*rover.speed*phys.drag
+    dragDelta = max(min(dragDelta,maxDragDelta),-maxDragDelta)
+    rover.speed += dragDelta
+    rover.speed = max(rover.speed,0)
+        
+    #rover.speed = min(rover.speed,phys.maxSpeed)
+    desiredRotSpeed = \
+        [-phys.hardTurn,-phys.turn,0,phys.turn,phys.hardTurn] \
+        [rover.turnControl+2]
+    rotSpeedDelta = subtractAngles(desiredRotSpeed,rover.rotSpeed)
+    rotSpeedDelta = \
+        max(min(rotSpeedDelta,dt*phys.rotAccel),-dt*phys.rotAccel)
+    rover.rotSpeed += rotSpeedDelta
+        
+    #update position and direction
+    rover.x += dt*rover.speed*cos(radians(rover.dir))
+    rover.y += dt*rover.speed*sin(radians(rover.dir))
+    rover.dir += dt*rover.rotSpeed
+    rover.dir = subtractAngles(rover.dir,0)
 
-def predict(phys,roverState,commands,dt,interval):
+    rover.t += dt
+    
+    return firstCommand
+
+def predict(phys,roverState,dt,interval,commands):
     """
     Constructs the trace of the rover.
     
@@ -155,54 +203,13 @@ def predict(phys,roverState,commands,dt,interval):
     
     Returns list of roverStates
     """
-    rover = copy(roverState)
+    rover = roverState
     finishTime = rover.t+interval
     res = []
     cur = 0
     while rover.t < finishTime:
-        #update controls
-        while cur<len(commands) and commands[cur][0]<rover.t:
-            for c in commands.cur[1]:
-                if c=="a":
-                    if rover.forwardControl<1:
-                        rover.forwardControl += 1
-                elif c=="b":
-                    if rover.forwardControl>-1:
-                        rover.forwardControl -= 1
-                elif c=="l":
-                    if rover.turnControl<2:
-                        rover.turnControl += 1
-                elif c=="r":
-                    if rover.turnControl>-2:
-                        rover.turnControl += 1
-            cur += 1
-            
-        #update speed
-        accel = [-phys.brake,0,phys.accel][rover.forwardControl+1]
-        rover.speed += dt*accel
-        dragDelta = -rover.speed
-        maxDragDelta = dt*rover.speed*rover.speed*phys.drag
-        dragDelta = max(min(dragDelta,maxDragDelta),-maxDragDelta)
-        rover.speed += dragDelta
-        rover.speed = max(rover.speed,0)
-        
-        #rover.speed = min(rover.speed,phys.maxSpeed)
-        desiredRotSpeed = \
-            [-phys.hardTurn,-phys.turn,0,phys.turn,phys.hardTurn] \
-            [rover.turnControl+2]
-        rotSpeedDelta = subtractAngles(desiredRotSpeed,rover.rotSpeed)
-        rotSpeedDelta = \
-            max(min(rotSpeedDelta,dt*phys.rotAccel),-dt*phys.rotAccel)
-        rover.rotSpeed += rotSpeedDelta
-        
-        #update position and direction
-        rover.x += dt*rover.speed*cos(radians(rover.dir))
-        rover.y += dt*rover.speed*sin(radians(rover.dir))
-        rover.dir += dt*rover.rotSpeed
-        rover.dir = subtractAngles(rover.dir,0)
-
-        rover.t += dt
-        
-        res.append(copy(rover))
+        rover = copy(rover)
+        cur=roverSimulationStep(phys,rover,dt,commands,cur)
+        res.append(rover)
         
     return res

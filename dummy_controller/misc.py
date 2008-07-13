@@ -14,6 +14,8 @@ class MinSQ(object):
         self.b += c*d
             
     def solve(self):
+        if abs(det(self.a))<1e-3:
+            return False
         try:
             self.x = solve(self.a,self.b)
             return True
