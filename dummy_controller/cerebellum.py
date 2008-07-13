@@ -102,7 +102,9 @@ class Cerebellum(object):
 
 	def mainLoop(self):
 		self.connection.start()
-		while True:
+		# to allow connection to startup
+		time.sleep(0.5)
+		while self.connection.running:
 			time.sleep(0.002)
 			running = self.connection.isRunning()
 			while self.connection.hasMessage():
@@ -215,28 +217,27 @@ class Cerebellum(object):
 		"""message dispatcher"""
 		if isinstance(message,InitData):
 			for h in self.handlers:
-				if hasattr(h,"processInitData"):
-					h.processInitData(message)
-
+				try: h.processInitData(message)
+				except: pass
 		elif isinstance(message,Telemetry):
 			if not self.runInProgress:
 				self.runInProgress = True
 				for h in self.handlers:
-					if hasattr(h,"runStart"):
-						h.runStart(self.currentRun)
+					try: h.runStart(self.currentRun)
+					except: pass
 			for h in self.handlers:
-				if hasattr(h,"processTelemetry"):
-					h.processTelemetry(message)
+				h.processTelemetry(message)
 
 		elif isinstance(message,Event):
 			for h in self.handlers:
-				if hasattr(h,"processEvent"):
-					h.processEvent(message)
+				try: h.processEvent(message)
+				except: pass
 
 		elif isinstance(message,EndOfRun):
 			for h in self.handlers:
-				if hasattr(h,"runFinish"):
-					h.runFinish(self.currentRun)
+				try: h.runFinish(self.currentRun)
+				except: pass
+
 			self.currentRun += 1
 			if self.currentRun == maxRuns:
 				print "maxRuns reached"
