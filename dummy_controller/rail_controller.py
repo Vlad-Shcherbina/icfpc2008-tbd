@@ -53,7 +53,7 @@ class RailController(object):
 		if cerebellum.runInProgress:
 			if self.timeForMessage<time.clock():
 				cerebellum.cmd(choice(["a","b","l","r"]))
-				self.timeForMessage = time.clock()+random()*0.5
+				self.timeForMessage = time.clock()+random()*0.25
 	def runFinish(self,currentRun):
 		"""message handler"""
 		print "rail: run finish"
@@ -64,8 +64,8 @@ cerebellum.registerMessageHandler(railController)
 
 if visualize:
 	from visualizer import *
-#	vis = Visualizer(cerebellum, staticMap, keyboardHandler)
-	vis = Visualizer(cerebellum, staticMap)
+	vis = Visualizer(cerebellum, staticMap, keyboardHandler)
+#	vis = Visualizer(cerebellum, staticMap)
 	
 	vis.registerDrawer(PredictorDrawer(cerebellum, physicalValues))
 	
