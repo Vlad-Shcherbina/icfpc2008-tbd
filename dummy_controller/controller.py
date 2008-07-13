@@ -19,9 +19,8 @@ cerebellum = Cerebellum(connection)
 def mainLoop():
     connection.start()
     cerebellum.mainLoop()
-    sys.exit(0)
-    print "dummy_controller terminating"
-    connection.close()
+#    sys.exit(0)
+#    print "controller terminating"
 
     if visualize:
         vis.terminate = True

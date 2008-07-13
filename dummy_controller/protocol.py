@@ -145,6 +145,7 @@ class EndOfRun(object):
 		time,score
 	"""
 	def __init__(self,command):
+		print "ENDOFRUN MESSAGE CREATION"
 		m = endOfRunRE.match(command)
 		assert m
 		self.__dict__ = m.groupdict()
@@ -176,18 +177,14 @@ class Connection(Thread):
 	"""
 	def __init__(self,ip,port):
 		Thread.__init__(self)
-#		print "Connecting %s:%s..."%(ip,port)
+
 		self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 #		self.socket.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
-
 		self.socket.connect((ip,port))
-	
 		self.socket.setblocking(1)
-#		self.socket.settimeout(0.005)
 
 		self.buf = ""
 		self.messages = []
-		self.running = True
 		self.lock = Semaphore()
 
 	def run(self):
@@ -196,22 +193,25 @@ class Connection(Thread):
 		put it into `messages` field
 		"""
 		self.running = True
-		try:
-			while self.running:
+		while self.running:
+			try:
 				received = self.socket.recv(1024)
-				if len(received) == 0: # socket closed
-					self.running = False
-					continue
-				self.buf += received
+			except socket.error,e:
+				print 'DEBUG: socket error on receive'
+				self.running = False
+				#raise
+			print "received",received
+			if len(received) == 0: # socket closed
+				self.running = False
+				continue
+			self.buf += received
+			m = re.search(";",self.buf)
+			while m:
+				command = self.buf[:m.end()]
+				print command
+				self.addMessage(eventTypes[command[0]](command))
+				self.buf = self.buf[m.end():]
 				m = re.search(";",self.buf)
-				while m:
-					command = self.buf[:m.end()]
-					self.addMessage(eventTypes[command[0]](command))
-					self.buf = self.buf[m.end():]
-					m = re.search(";",self.buf)
-		except socket.error,e:
-			print 'DEBUG: socket closed'
-			self.running = False
 			
 	def stopRun(self):
 		self.running = False
@@ -242,7 +242,13 @@ class Connection(Thread):
 		if command=="":
 			return
 		assert re.match(r"([ab]?[lr]?;)+$",command)
-		self.socket.sendall(command)
+		if not self.running:
+			return
+		try:
+			self.socket.sendall(command)
+		except:
+			print "[DEBUG] socket error on send"
+			pass
 
 	def close(self):
 		self.socket.close()
