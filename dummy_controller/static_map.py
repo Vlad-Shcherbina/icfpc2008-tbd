@@ -110,6 +110,8 @@ class StaticMap(object):
 		if self.tree == None:
 			self.tree = Node(-0.5*self.dx,-0.5*self.dy,
 							  0.5*self.dx, 0.5*self.dy,[])
+			self.tree.parent = None
+			self.curNode = self.tree
 
 	def processTelemetry(self,tele):
 		"""message handler"""
@@ -119,12 +121,31 @@ class StaticMap(object):
 					self.staticObjects.append(o)
 					self.objectsHash[o] = True
 					self.tree.addObject(o)
+					self.curNode = self.tree
 
-	def intersectionObjects(self,x,y):
-		"""Returns ' ' or kind of object intersected"""
-		for o in self.staticObjects:
+	def intersect(self,x,y):
+		"""Returns None or one of the objects intersected"""
+		node = self.curNode
+		while (x<node.x1 or x>node.x2 or
+				y<node.y1 or y>node.y2) and \
+			node.parent is not None:
+			node = node.parent
+		while node.childs is not None:
+			if node.verticalSplit:
+				if x+x<node.x1+node.x2:
+					node = node.childs[0]
+				else:
+					node = node.childs[1]
+			else:
+				if y+y<node.y1+node.y2:
+					node = node.childs[0]
+				else:
+					node = node.childs[1]
+		self.curNode = node
+		for o in node.objects:
 			dist2 = (o.x-x)*(o.x-x)+(o.y-y)*(o.y-y)
 			minDist = radius(o)
 			if dist2 <= minDist*minDist:
-				return o.kind
-		return " "
+				return o
+		return None
+	

@@ -139,7 +139,20 @@ class Visualizer(Thread):
 		glPopMatrix()
 		
 	def testIntersection(self):
-		pass
+		for t in range(2): 
+			for i in range(-10,10):
+				for j in range(-10,10):
+					x = self.tele.x + i
+					y = self.tele.y + j
+					x += (random()-0.5)*1
+					y += (random()-0.5)*1
+					#if random()<0.999:
+					#	continue
+					if self.staticMap.intersect(x,y):
+						glColor3f(1,1,0)
+					else:
+						glColor3f(0,1,1)
+					circle(x,y,0.1,5)
 
 	def display(self):
 		if not hasattr(self,"initData") or\
@@ -172,6 +185,8 @@ class Visualizer(Thread):
 		drawNode(self.staticMap.tree)
 		for o in self.staticMap.staticObjects:
 			staticObject(o)
+			
+		#self.testIntersection()
 
 		glPopMatrix()
 		glutSwapBuffers()
