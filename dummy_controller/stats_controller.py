@@ -7,8 +7,7 @@ from random import randrange
 import os
 
 from misc import *
-from static_map import StaticMap
-from controller import connection,cerebellum,visualize,mainLoop
+from controller import connection,cerebellum,visualize,mainLoop,staticMap
 
 
 ##############
@@ -60,9 +59,6 @@ cerebellum.registerMessageHandler(TestHandler())
 
 stater = Stater(cerebellum)
 cerebellum.registerMessageHandler(stater)
-
-staticMap = StaticMap()
-cerebellum.registerMessageHandler(staticMap)
 
 if visualize:
 	from visualizer import Visualizer

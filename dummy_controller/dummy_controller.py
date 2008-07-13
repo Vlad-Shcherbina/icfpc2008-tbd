@@ -3,17 +3,13 @@ import psyco
 psyco.full()
 
 from misc import *
-from static_map import StaticMap
-from controller import connection,cerebellum,visualize,mainLoop
+from controller import connection,cerebellum,visualize,mainLoop,staticMap
 
 ##############
 
 cerebellum.registerMessageHandler(TestHandler())
 
 #cerebellum.command = ("moveTo",0,0)
-
-staticMap = StaticMap()
-cerebellum.registerMessageHandler(staticMap)
 
 if visualize:
     from visualizer import Visualizer

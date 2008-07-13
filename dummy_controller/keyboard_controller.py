@@ -3,13 +3,9 @@ import psyco
 psyco.full()
 
 from misc import *
-from static_map import StaticMap
-from controller import connection,cerebellum,visualize,mainLoop
+from controller import connection,cerebellum,visualize,staticMap,mainLoop
 
 ##############
-
-staticMap = StaticMap()
-cerebellum.registerMessageHandler(staticMap)
 
 keyMapping = { 
 	"w":(lambda: connection.sendCommand("a;")),
