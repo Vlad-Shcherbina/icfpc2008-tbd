@@ -191,7 +191,7 @@ class Cerebellum(object):
 			clock = time.clock()
 			newOffset =  clock - tele.timeStamp
 			diff = self.clockOffset.value - newOffset 
-			print "%6.3f %6.3f %6.3f" % (clock, self.clockOffset.value, diff)
+#			print "%6.3f %6.3f %6.3f" % (clock, self.clockOffset.value, diff)
 			self.avgReceptionLatency.next(abs(diff))
 			self.clockOffset.next(newOffset)
 			

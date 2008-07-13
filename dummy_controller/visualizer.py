@@ -98,7 +98,7 @@ class Visualizer(Thread):
 		glutDisplayFunc(self.display)
 		glutIdleFunc(self.idle)
 		if (self.keyHandler):
-			glutKeyboardFunc(self.keyhandler)
+			glutKeyboardFunc(self.keyHandler)
 
 		glutMainLoop()
 		
