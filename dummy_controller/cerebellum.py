@@ -187,8 +187,7 @@ class Cerebellum(object):
 			if not self.runInProgress:
 				self.runInProgress = True
 				for h in self.handlers:
-					try: h.runStart(self.currentRun)
-					except: pass
+					if hasattr(h, "runStart"): h.runStart(self.currentRun)
 			for h in self.handlers:
 				h.processTelemetry(message)
 
