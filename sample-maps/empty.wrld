@@ -1,0 +1,40 @@
+{
+    "size" : 50,
+    "timeLimit" : 30000,
+    "vehicleParams" : {
+        "maxSpeed" : 20,
+        "accel" : 2,
+        "brake" : 3,
+        "turn" : 20,
+        "hardTurn" : 60,
+        "frontView" : 60,
+	"rotAccel" : 120,
+        "rearView" : 30
+      },
+    "martianParams" : {
+        "maxSpeed" : 20,
+        "accel" : 2,
+        "brake" : 3,
+        "turn" : 20,
+        "hardTurn" : 60,
+	"rotAccel" : 120,
+        "frontView" : 60,
+        "rearView" : 30
+      },
+    "craters" : [
+      ],
+    "boulders" : [
+      ],
+    "runs" : [
+        {
+            "vehicle" : {
+                "x" : -20,
+                "y" : 0,
+                "dir" : 0
+              },
+            "enemies" : [
+
+              ]
+          }
+      ]
+  }
