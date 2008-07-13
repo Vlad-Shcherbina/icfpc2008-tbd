@@ -13,7 +13,7 @@ class PhysicalValues(object):
         self.brake = 1
         self.turn = 20
         self.hardTurn = 60
-        self.rotAccel = 120
+        self.rotAccel = 120 # this is initial value, it is used specifically
         self.drag = 0
         
         #initialize esteems
@@ -37,7 +37,7 @@ class PhysicalValues(object):
     def processTelemetry(self,tele):
         """message handler"""
         self.hist.append(RoverState(tele))
-        self.hist = self.hist[-5:] # keep last five states
+        self.hist = self.hist[-7:] # keep last seven states
         
         if len(self.hist) >= 2:
             self.hist[-1].setRotSpeed(self.hist[-2])
@@ -69,6 +69,24 @@ class PhysicalValues(object):
                     array([0,-w,-dt*speed**2]),dSpeed)
 
         self.esteemParams()
+
+        if len(self.hist) >= 3:
+            # calculate angular acceleration
+            
+            #if there were turn commands in recent history (say, five states)
+            if any([self.hist[-2].turnControl != s.turnControl 
+                   for s in self.hist[-7:-2]]):
+                dt2 = self.hist[-1].t-self.hist[-3].t
+                if dt2>1e-4:
+                    curRotAccel = (self.hist[-1].rotSpeed-self.hist[-2].rotSpeed)/\
+                                  (0.5*dt2)
+                    curRotAccel = abs(curRotAccel)
+                    if self.rotAccel == 120 or curRotAccel>self.rotAccel:
+                        # 120 - initial value, it can be overriden
+                        
+                        # increase no more than 10 percents a time
+                        self.rotAccel = min(curRotAccel,self.rotAccel*1.10)
+
             
     def esteemParams(self):
         if self.abdSQ.solve():
@@ -87,6 +105,7 @@ class PhysicalValues(object):
         print "  accel",self.accel
         print "  brake",self.brake
         print "  drag",self.drag
+        print "  rotAccel",self.rotAccel
         
 class RoverState(object):
     def __init__(self,tele):
@@ -103,6 +122,8 @@ class RoverState(object):
         if dt>1e-4:
             dDir = subtractAngles(self.dir,prevState.dir)
             self.rotSpeed = dDir/dt
+        else:
+            self.rotSpeed = prevState.rotSpeed
 
 
 def predict(phys,roverState,commands,dt,interval):

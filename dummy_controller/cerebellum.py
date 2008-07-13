@@ -34,7 +34,6 @@ class Cerebellum(object):
 		self.handlers = []
 		self.registerMessageHandler(self)
 
-		self.rotAccel = 720
 		self.latency = 0.02 # TODO: estimate it correctly
 
 		self.command = None
@@ -177,27 +176,6 @@ class Cerebellum(object):
 
 #		self.cmd(choice(["al;","al;","br;",]))
 		
-		if len(self.teles) >= 2:
-			dt = tele.timeStamp-self.teles[-2].timeStamp
-
-		if len(self.teles) >= 3:
-			# calculate angular acceleration
-			rotSpeed = \
-				subtractAngles(tele.dir,self.teles[-2].dir)/ \
-				(dt+1e-6)
-			self.rotSpeed = rotSpeed
-			prevDt=self.teles[-2].timeStamp-self.teles[-3].timeStamp
-			prevRotSpeed = subtractAngles(
-							self.teles[-2].dir,
-							self.teles[-3].dir)/(prevDt+1e-6)
-			if dt+prevDt>1e-8:
-				curRotAccel = (rotSpeed-prevRotSpeed)/(dt+prevDt)*2
-				if self.rotAccel==720: # initial value
-					self.rotAccel = curRotAccel
-				else:
-					self.rotAccel = max(self.rotAccel,abs(curRotAccel))
-
-
 
 	def processMessage(self,message):
 		"""message dispatcher"""
@@ -235,5 +213,4 @@ class Cerebellum(object):
 		if not self.runInProgress:
 			return
 		print "Estimates:"
-		print "  rotAccel",self.rotAccel
 		print "  receptionLatency",self.avgReceptionLatency        
