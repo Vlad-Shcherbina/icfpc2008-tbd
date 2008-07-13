@@ -28,7 +28,7 @@ def circle(x,y,r,segments=50):
 def base():
 	glColor3f(0,1,0)
 	circle(0,0,5)
-	for i in range(1,5):
+	for i in range(1,6):
 		circle(0,0,i)
 			
 def martian(martian):
@@ -43,56 +43,30 @@ def martian(martian):
 	glutSolidSphere(0.2,20,10)
 	glPopMatrix()
 
-def staticObject(obj,highlight=False):
-	if obj.kind=="h":
-		glColor3f(0,1,0)
-	elif obj.kind=="c":
-		glColor3f(1,0,0)
-	elif obj.kind=="b":
-		glColor3f(1,1,1)
-	circle(obj.x,obj.y,obj.radius,segments = 20)
-	if highlight:
-		for i in range(1,5):
-			circle(obj.x,obj.y,obj.radius*i/5,segments=10)
-
-def drawNode(node):
-	if node.childs is not None:
-		for c in node.childs:
-			drawNode(c)
-		return
-	glPushMatrix()
-	glColor3f(0,0,1)
-	glTranslatef(0.5*(node.x1+node.x2),0.5*(node.y1+node.y2),0)
-	glScalef(0.5*(node.x2-node.x1),0.5*(node.y2-node.y1),1)
-#	circle(0,0,1)
-	glBegin(GL_LINE_LOOP)
-	glVertex2f(-1,-1)
-	glVertex2f( 1,-1)
-	glVertex2f( 1, 1)
-	glVertex2f(-1, 1)
-	glEnd()
-	glPopMatrix()
-#	for o in node.objects:
-#		staticObject(o)
-
 class Visualizer(Thread):
 	def __init__(self, cerebellum, staticMap, keyHandler = None):
 		Thread.__init__(self)
 		self.terminate = False
+		self.drawers = []
 		
 		self.cerebellum = cerebellum
-		self.staticMap = staticMap
-		self.keyHandler = keyHandler
-		
 		cerebellum.registerMessageHandler(self)
 		
+		self.staticMap = staticMap
+		self.registerDrawer(staticMap.drawer)
+		
+		self.keyHandler = keyHandler
+		
+		
+	def registerDrawer(self,drawer):
+		self.drawers.append(drawer)
 
 	def run(self):
 		glutInit([])
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
 		glutInitWindowSize(800,800)
 		self.window = glutCreateWindow(name)
-		glEnable(GL_DEPTH_TEST)
+#		glEnable(GL_DEPTH_TEST)
 
 		glClearColor(0.,0.,0.,1.)
 		glutDisplayFunc(self.display)
@@ -128,11 +102,12 @@ class Visualizer(Thread):
 		glTranslatef(t.x,t.y,0)
 		glColor3f(1,1,1)
 		glutSolidSphere(0.5,20,10)
+		circle(0,0,0.5)
 
 		glRotatef(t.dir,0,0,1)
 		longAxis = (d.maxSensor+d.minSensor)*0.5
 		shortAxis = sqrt(d.maxSensor*d.minSensor)
-		glTranslatef((d.maxSensor-d.minSensor)*0.5,0,-5)
+		glTranslatef((d.maxSensor-d.minSensor)*0.5,0,0)
 		glScalef(longAxis,shortAxis,0.001)
 		glColor3f(0.5,0.5,0.5)
 		glScalef(1,1,0.001)
@@ -181,24 +156,17 @@ class Visualizer(Thread):
 		glMatrixMode(GL_MODELVIEW)
 
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-		glPushMatrix()
 
 		base()
 		self.rover()
 		for o in self.tele.objects:
 			if isinstance(o,StaticObject):
-				staticObject(o,highlight=True)
 				pass
 			else:
 				martian(o)
 
-		# previously remembered objects
-		drawNode(self.staticMap.tree)
-		for o in self.staticMap.staticObjects:
-			staticObject(o)
-			
-		#self.testIntersection()
+		for drawer in self.drawers:
+			drawer()
 
-		glPopMatrix()
 		glutSwapBuffers()
 

@@ -97,6 +97,25 @@ class Node(object):
 		self.objects = None
 	def __str__(self):
 		return "Node (%s,%s)-(%s,%s)"%(self.x1,self.y1,self.x2,self.y2)
+	def draw(self):
+		from visualizer import *		
+		if self.childs is not None:
+			for c in self.childs:
+				c.draw()
+			return
+		glPushMatrix()
+		glColor3f(0,0,1)
+		glTranslatef(0.5*(self.x1+self.x2),0.5*(self.y1+self.y2),0)
+		glScalef(0.5*(self.x2-self.x1),0.5*(self.y2-self.y1),1)
+		circle(0,0,1)
+		glBegin(GL_LINE_LOOP)
+		glVertex2f(-1,-1)
+		glVertex2f( 1,-1)
+		glVertex2f( 1, 1)
+		glVertex2f(-1, 1)
+		glEnd()
+		glPopMatrix()
+
 
 class StaticMap(object):
 	def __init__(self):
@@ -148,4 +167,17 @@ class StaticMap(object):
 			if dist2 <= minDist*minDist:
 				return o
 		return None
+	def drawer(self):
+		from visualizer import *
+		for obj in self.staticObjects:
+			if obj.kind=="c":
+				glColor3f(1,0,0)
+			elif obj.kind=="b":
+				glColor3f(1,1,1)
+			circle(obj.x,obj.y,obj.radius,segments = 20)
+
+		self.tree.draw()
 	
+
+#	for o in node.objects:
+#		staticObject(o)

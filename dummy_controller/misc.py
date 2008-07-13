@@ -54,3 +54,18 @@ class TestHandler(object):
 #        print "event"
     def runFinish(self,runNumber):
         print "run %s finished"%runNumber
+
+def addMethod(*classes):
+    """Adds decorated method to given classes
+    
+    Usage:
+    @addMethod(class1,...)
+    def newMethod(self,...):
+        ...
+        @
+    """
+    def t(m):
+        for c in classes:
+            setattr(c,m.__name__,m)
+        return m
+    return t
