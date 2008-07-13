@@ -116,13 +116,13 @@ class Cerebellum(object):
 		else:
 			self.forwardControl = choice([0]*8+[1]+[-1])
 	
-	def getSomeSleep():
-		time.sleep(0.002)
 
 	def mainLoop(self):
 		self.connection.start()
 		# to allow connection to startup
 		t = time.clock()
+		
+		sleepTime = 0
 		
 		while self.connection.state == ConState_Initializing:
 			if (time.clock() - t > 20):
@@ -141,12 +141,13 @@ class Cerebellum(object):
 				m = self.connection.popMessage()
 				self.processMessage(m)
 			else:
-				getSomeSleep()
+				time.sleep(0.002)
+				sleepTime += 0.002
 
 				
 			if not running:
 				break
-			
+		print "run time: %3.2f sleep time: %3.2f" % ((time.clock() - t), sleepTime)
 		self.connection.join()
 
 	def prepareForNewRun(self):

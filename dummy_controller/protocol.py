@@ -1,3 +1,4 @@
+import time
 import sys
 import socket
 import errno
@@ -5,71 +6,17 @@ import re
 import new
 from threading import Thread, Semaphore
 
-maxRuns = 1
-messages = []
-
-################
-# parsing tools
-
-floatRE = r"[+-]?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?"
-initRE = re.compile((
-	r"I (?P<dx>%s) (?P<dy>%s) (?P<timeLimit>%s) "+
-	r"(?P<minSensor>%s) (?P<maxSensor>%s) "+
-	r"(?P<maxSpeed>%s) (?P<maxTurn>%s) (?P<maxHardTurn>%s) ;$" ) % \
-	(floatRE,floatRE,floatRE,floatRE,floatRE,floatRE,floatRE,floatRE,) )
-telemetryRE = re.compile((
-	r"T (?P<timeStamp>%s) (?P<ctl>[ab\-][Ll\-rR]) "+
-	r"(?P<x>%s) (?P<y>%s) "+
-	r"(?P<dir>%s) (?P<speed>%s) "+
-	r"(?P<objects>.*);$") % \
-	(floatRE,floatRE,floatRE,floatRE,floatRE,) )
-staticObjectRE = re.compile(
-	r"(?P<kind>[bch]) (?P<x>%s) (?P<y>%s) (?P<radius>%s) " % \
-	(floatRE,floatRE,floatRE,) )
-martianRE = re.compile(
-	r"m (?P<x>%s) (?P<y>%s) (?P<dir>%s) (?P<speed>%s) " % \
-	(floatRE,floatRE,floatRE,floatRE,))
-eventRE = re.compile(
-	r"(?P<tag>[BCKS]) (?P<timeStamp>%s) ;$"%floatRE )
-endOfRunRE = re.compile(
-	r"E (?P<time>%s) (?P<score>%s) ;$"%(floatRE,floatRE,) )
-
-def convertFloats(obj,fields):
-	for f in fields:
-		setattr(obj,f,float(getattr(obj,f)))
-
-
 def slotsToDict(object):
 	d = {}
 	for attr in object.__class__.__slots__:
 		d[attr] = getattr(object, attr)
 	return d;
 		
-
-class InitData(object):
-	"""
-	Fields:
-		dx,dy
-		timeLimit,
-		minSensor,maxSensor,
-		maxSpeed,maxTurn,maxHardTurn
-	"""
-	def __init__(self,command):
-		m = initRE.match(command)
-		assert m
-		self.__dict__ = m.groupdict()
-		convertFloats(self,[
-			"dx","dy","timeLimit",
-			"minSensor","maxSensor",
-			"maxSpeed","maxTurn","maxHardTurn"])
-		self.timeLimit *= 0.001
-
+################
+# objects
 
 class StaticObject(object):
-	"""
-	Fields:
-		x,y,radius
-	"""
+	__slots__ = ("kind", "x", "y", "radius")
 	
 	def __eq__(self,other):
 		if not isinstance(other,StaticObject):
@@ -84,80 +31,97 @@ class StaticObject(object):
 				113*hash(self.x+self.y*.91234+self.radius*3.1415)
 
 	def __repr__(self):
-		return "Object"+repr(self.__dict__)
+		return "Object" + repr(slotsToDict(self))
 
 class Martian(object):
-	"""
-	Fields:
-		x,y,dir,speed
-	"""
+	__slots__ = ("x", "y", "dir", "speed")
+	
 	def __repr__(self):
-		return "Martian"+repr(self.__dict__)
+		return "Martian" + repr(slotsToDict(self))
+
+################
+# events
+
+class InitData(object):
+	__slots__ = (
+		"dx", "dy",
+		"timeLimit",
+		"minSensor","maxSensor",
+		"maxSpeed", "maxTurn", "maxHardTurn")
+
+	def __init__(self, command):
+		slots = self.__class__.__slots__
+		for i, s in enumerate(command[1:-1]):
+			setattr(self, slots[i], float(s))
+		self.timeLimit *= 0.001
+
 
 class Telemetry(object):
-	"""
-	Fields:
-		timeStamp,
-		vehicleCtl,
-		vehicleX,vehicleY,
-		vehicleDir,VehicleSpeed,
-		objects
+	__slots__ = (
+		"localTimeStamp", "timeStamp", 
+		"ctl",
+		"x", "y",
+		"dir", "speed",
+		"objects")
+	
+	def __init__(self, command):
+		self.localTimeStamp = time.clock()
+		
+		slots = self.__class__.__slots__
+		
+		pos = 1 
+		for s in slots[1:-1]:
+			if s != "ctl":
+				setattr(self, s, float(command[pos]))
+			else:
+				self.ctl = command[pos]
+			pos += 1
 
-	`objects` is array of static objects and martians
-	"""
-	def __init__(self,command):
-		m = telemetryRE.match(command)
-		assert m
-		self.__dict__ = m.groupdict()
-		objs = m.groupdict()["objects"]
-		pos = 0
-		self.objects = []
-		while pos != len(objs):
-			if objs[pos] == "m":
+		self.timeStamp *= 0.001
+		
+		objs = []
+		
+		while True:
+			if command[pos] == "m":
 				obj = Martian()
-				m = martianRE.match(objs,pos)
-				assert m
-				obj.__dict__ = m.groupdict()
-				convertFloats(obj,["x","y","dir","speed"])
-				self.objects.append(obj)
+				pos += 1
+				for s in obj.__class__.__slots__:
+					setattr(obj, s, float(command[pos]))
+					pos += 1
+				objs.append(obj)
+			elif command[pos] == ";":
+				break
 			else:
 				obj = StaticObject()
-				m = staticObjectRE.match(objs,pos)
-				assert m
-				obj.__dict__ = m.groupdict()
-				convertFloats(obj,["x","y","radius"])
-				if obj.kind!="h":
-					self.objects.append(obj)
-			pos = m.end()
+				obj.kind = command[pos]
+				pos += 1
+				for s in obj.__class__.__slots__[1:]:
+					setattr(obj, s, float(command[pos]))
+					pos += 1
+				
+				if obj.kind != "h":
+					objs.append(obj)
+					
+		self.objects = objs
 
-		convertFloats(self,[
-			"timeStamp","x","y","dir","speed"])
-		self.timeStamp *= 0.001 # it was given in milliseconds
 
 
 class Event(object):
-	"""
-	Fields:
-		timeStamp
-	"""
-	def __init__(self,command):
-		m = eventRE.match(command)
-		assert m
-		self.__dict__ = m.groupdict()
-		convertFloats(self,["timeStamp"])
-		self.timeStamp *= 0.001
+	__slots__ = ("localTimeStamp", "tag", "timeStamp")  
+	def __init__(self, command):
+		self.localTimeStamp = time.clock()
+		self.tag = command[0]
+		self.timeStamp = float(command[1]) * 0.001
+		
 
 class EndOfRun(object):
-	"""
-	Fields:
-		time,score
-	"""
-	def __init__(self,command):
-		m = endOfRunRE.match(command)
-		assert m
-		self.__dict__ = m.groupdict()
-		convertFloats(self,[
-			"time","score"])
+	__slots__ = ("time", "score")  
+	
+	def __init__(self, command):
+		self.time = float(command[1])
+		self.score = float(command[2])
+		
+		
 
 eventTypes = {
 	"I": InitData,
@@ -169,8 +133,9 @@ eventTypes = {
 	"E": EndOfRun,
 }
 
+
 ###########
-# networking tools
+# networking
 
 ConState_Initializing = 0
 ConState_Running = 1
@@ -208,7 +173,7 @@ class Connection(Thread):
 		self.writePtr = 0
 		self.readPtr = 0
 		self.messageBuffer = [None for i in range(messageBufferSize)]
-
+		
 	def run(self):
 		"""
 		receive information from rover (if any) and 
@@ -235,7 +200,7 @@ class Connection(Thread):
 				m = re.search(";",self.buf)
 				while m:
 					command = self.buf[:m.end()]
-					self.addMessage(eventTypes[command[0]](command))
+					self.addMessage(eventTypes[command[0]](command.split()))
 					self.buf = self.buf[m.end():]
 					m = re.search(";",self.buf)
 					
