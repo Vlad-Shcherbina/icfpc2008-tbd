@@ -3,30 +3,38 @@ from static_map import *
 from math import *
 
 def calc_hit(x1, y1, x2, y2, px, py, R, r, g):
-    """calculates the math magic for an obstacle (px,py) with the radius R over the segment ((x1,y1),(x2,y2)).
+    """
+    calculates the math magic for an obstacle (px,py) with the radius R over 
+    the segment ((x1,y1),(x2,y2)).
     r - rover radius
     g - preferred avoidance distance (safe distance to pass by an obstacle)
     returns:
      - None when the point's height does not hit the segment
-     - distance till the point of an obstacle hit and coordinates of recommended avoidance point otherwise"""
+     - distance till the point of an obstacle hit and coordinates of 
+     recommended avoidance point otherwise
+    """
     a2 = (x2-px)**2 + (y2-py)**2
     b2 = (x1-x2)**2 + (y1-y2)**2
     c2 = (x1-px)**2 + (y1-py)**2
     b = sqrt(b2)
     c = sqrt(c2)
-    cosalpha = (b2 + c2 - a2) / (2 * b * c) # b != 0 because then we reached the target; c != 0 because then we died 
-    if (cosalpha < 0.0): return None # does not hit
+    cosalpha = (b2 + c2 - a2) / (2 * b * c) 
+    # b != 0 because then we reached the target; c != 0 because then we died 
+    if (cosalpha < 0.0): 
+        return None # does not hit
     assert cosalpha <= 1.01
     assert cosalpha >= -1.01
     l = c * cosalpha
-    if l > b: return None # does not hit
+    if l > b: 
+        return None # does not hit
     sinalpha2 = 1.0 - cosalpha**2
     if sinalpha2 < 0: sinalpha2 = 0
     sinalpha = sqrt(sinalpha2)
     assert sinalpha <= 1.01
     assert sinalpha >= -1.01
     h = abs(c * sinalpha)
-    if h > R: return None # does not hit
+    if h > R: 
+        return None # does not hit
     hx = x1 + ((x2 - x1) * l) / b;
     hy = y1 + ((y2 - y1) * l) / b;
     if h == 0:
@@ -59,22 +67,24 @@ class SimpleStackLogic(object):
         """message handler"""
         x1 = tele.x
         y1 = tele.y
-        if len(self.targets) == 0: return
+        if len(self.targets) == 0: 
+            return
         self.checkReached(x1, y1)
-        if len(self.targets) == 0: return
+        if len(self.targets) == 0: 
+            return
         x2, y2 = self.targets[0]
         d_min = None
         ox_min = None
         oy_min = None
         for o in self.mymap.staticObjects:
             rslt = calc_hit(x1, y1, x2, y2, o.x, o.y, o.radius, 0.5, 0.1)
-            if not (rslt is None):
+            if rslt is not None:
                 d, ox, oy = rslt
                 if (d_min is None) or (d < d_min):
                     d_min = d
                     ox_min = ox
                     oy_min = oy
-        if not (d_min is None):
+        if d_min is not None:
             # we found an obstacle to avoid
             self.addTarget(ox_min, oy_min)
         x2, y2 = self.targets[0]
