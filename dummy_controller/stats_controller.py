@@ -3,7 +3,7 @@ import psyco
 psyco.full()
 
 import time
-from random import randrange
+from random import *
 import os
 
 from misc import *
@@ -12,7 +12,7 @@ from controller import connection,cerebellum,visualize,mainLoop,staticMap
 
 ##############
 
-def delaysToGraph(delays,seconds=1):
+def delaysToGraph(delays,height=100,seconds=1):
 	steps = 100
 	freqs = [0 for i in range(steps)]
 	for d in delays:
@@ -24,19 +24,22 @@ def delaysToGraph(delays,seconds=1):
 	marks = "|".join([str(0.1*i) for i in range(seconds*10+1)])
 	
 	res = "http://chart.apis.google.com/chart?" +\
-		"cht=lc&chd=t:%s&chs=400x100&chl=%s"%(freqs,marks)
+		"cht=lc&chd=t:%s&chs=400x%s&chl=%s"%(freqs,height,marks)
 	return res
 	
 
 class Stater(object):
 	def __init__(self,cereb):
 		self.telemetryIntervals = []
-		self.delays = []
+		self.delays = [[] for i in range(10)]
 		self.cereb = cereb
 		
 	def runStart(self,runNumber):
 		"""message handler"""
 		self.state = 0
+		self.sendDelayIndex = 0
+		self.maxSendDelayIndex = 10 
+		self.sendDelayStep = 0.01
     	
 	def processTelemetry(self,tele):
 		"""message handler"""
@@ -47,12 +50,16 @@ class Stater(object):
 
 		if self.state == 0:
 			if tele.ctl == "--":
+				time.sleep(self.sendDelayStep*self.sendDelayIndex)
 				self.sendTime = time.clock()
 				self.cereb.forwardControl = 1
 				self.state = 1
 		elif self.state == 1:
 			if tele.ctl != "--":
-				self.delays.append(time.clock()-self.sendTime)
+				self.delays[self.sendDelayIndex].\
+					append(time.clock()-self.sendTime)
+				self.sendDelayIndex = \
+					(self.sendDelayIndex+1) % self.maxSendDelayIndex
 				self.cereb.forwardControl = 0
 				self.state = 0
 				
@@ -63,8 +70,12 @@ class Stater(object):
 		fout.write("<html><body></body></html>")
 		fout.write("telemetry intervals: <br/> <img src='%s'/> <hr/>"%
 				   delaysToGraph(self.telemetryIntervals))
-		fout.write("full latency: <br/> <img src='%s'/> <hr/>"%
-				   delaysToGraph(self.delays))
+		
+		for i in range(self.maxSendDelayIndex):
+			fout.write("reaction if we send %0.2fs after tele: <br/>"%
+					    (self.sendDelayStep*i)+
+						"<img src='%s'/> <br>"%
+						delaysToGraph(self.delays[i],height=50))
 		fout.close()
 		os.system("start log\\stats.html")
 
