@@ -18,8 +18,10 @@ logic = SimpleStackLogic(cerebellum,staticMap)
 cerebellum.registerMessageHandler(logic)
 
 if visualize:
-	from simple_stack_visualizer import StackVisualizer
-	vis = StackVisualizer(logic, cerebellum, staticMap)
+	from visualizer import Visualizer
+	import simple_stack_visualizer
+	vis = Visualizer(cerebellum, staticMap)
+	vis.registerDrawer(simple_stack_visualizer.createDrawer(logic))
 	vis.start()
 
 mainLoop()
