@@ -18,7 +18,7 @@ class StackVisualizer():
         
     def display(self):
         for t in self.logic.targets:
-            tx, ty = t
+            o , tx, ty = t
             target(tx, ty)
 
 def createDrawer(logic):

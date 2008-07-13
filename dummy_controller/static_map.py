@@ -94,7 +94,7 @@ class Node(object):
 				child = Node(xs[i],ys[j],xs[i+1],ys[j+1],self.objects)
 				child.parent = self
 				self.childs.append(child)
-		self.objects = None
+#		self.objects = None
 	def __str__(self):
 		return "Node (%s,%s)-(%s,%s)"%(self.x1,self.y1,self.x2,self.y2)
 	def draw(self):
@@ -118,6 +118,14 @@ class Node(object):
 		for obj in self.objects:
 			glColor3f(0,1,1)
 			circle(obj.x+0.2,obj.y,obj.radius)
+	def calc_all_objects(self):
+		if self.childs is None:
+			return self.objects
+		else:
+			rt = []
+			for child in self.childs:
+				rt += child.calc_all_objects()
+			return rt
 
 
 class StaticMap(object):
@@ -172,7 +180,8 @@ class StaticMap(object):
 		return None
 	def drawer(self):
 		from visualizer import *
-		for obj in self.staticObjects:
+#		for obj in self.staticObjects:
+		for obj in self.tree.calc_all_objects():
 			if obj.kind=="c":
 				glColor3f(1,0,0)
 			elif obj.kind=="b":
