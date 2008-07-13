@@ -21,10 +21,10 @@ def delaysToGraph(delays,seconds=1):
 			freqs[f] += 1
 	
 	freqs = ",".join([str(int(100*f/(1e-2+max(freqs)))) for f in freqs])
-	marks = "|".join(map(str,range(seconds+1)))
+	marks = "|".join([str(0.1*i) for i in range(seconds*10+1)])
 	
 	res = "http://chart.apis.google.com/chart?" +\
-		"cht=lc&chd=t:%s&chs=300x100&chl=%s"%(freqs,marks)
+		"cht=lc&chd=t:%s&chs=400x100&chl=%s"%(freqs,marks)
 	return res
 	
 
