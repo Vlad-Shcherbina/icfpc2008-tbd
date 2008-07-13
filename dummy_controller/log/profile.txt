@@ -1,0 +1,28 @@
+         153765 function calls (133293 primitive calls) in 1341.579 CPU seconds
+
+   Ordered by: internal time, call count
+   List reduced from 87 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1 1323.221 1323.221 1341.578 1341.578 cerebellum.py:121(mainLoop)
+    19414    2.844    0.000    2.844    0.000 simple_stack_logic.py:46(calc_hit)
+    43945    2.791    0.000    2.791    0.000 protocol.py:267(hasMessage)
+     1776    1.447    0.001    4.162    0.002 static_map.py:145(processTelemetry)
+     1169    1.117    0.001    3.961    0.003 simple_stack_logic.py:91(calcCollision)
+8539/1169    1.113    0.000    2.264    0.002 simple_stack_logic.py:20(_getObjects)
+     1101    1.056    0.001    1.056    0.001 <string>:1(sendall)
+    13416    0.952    0.000    0.952    0.000 protocol.py:82(__hash__)
+10921/811    0.890    0.000    0.890    0.001 static_map.py:120(calc_all_objects)
+    13020    0.790    0.000    0.790    0.000 protocol.py:74(__eq__)
+      888    0.656    0.001    3.794    0.004 cerebellum.py:180(processTelemetry)
+ 3078/198    0.476    0.000    0.972    0.005 static_map.py:61(addObject)
+      899    0.449    0.000   15.418    0.017 cerebellum.py:224(processMessage)
+     2644    0.405    0.000    1.900    0.001 protocol.py:300(sendCommand)
+      888    0.323    0.000    6.964    0.008 simple_stack_logic.py:124(processTelemetry)
+     9708    0.308    0.000    0.308    0.000 simple_stack_logic.py:5(sort)
+      878    0.286    0.000    0.738    0.001 cerebellum.py:93(_rotateTo)
+     3078    0.253    0.000    0.253    0.000 static_map.py:14(rectCircleIntersection)
+      888    0.246    0.000    0.246    0.000 simple_stack_logic.py:171(checkReached)
+     1101    0.237    0.000    0.438    0.000 re.py:134(match)
+
+
