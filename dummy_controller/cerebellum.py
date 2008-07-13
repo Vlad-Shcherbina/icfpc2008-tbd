@@ -53,6 +53,7 @@ class Cerebellum(object):
 			runStart(runNumber)
 			processTelemetry(tele)
 			processEvent(event)
+			idle()
 			runFinish()
 		"""
 		self.handlers.append(handler)
@@ -106,6 +107,9 @@ class Cerebellum(object):
 		time.sleep(0.5)
 		while self.connection.running:
 			time.sleep(0.002)
+			for h in self.handlers:
+				if hasattr(h,"idle"):
+					h.idle()
 			running = self.connection.isRunning()
 			while self.connection.hasMessage():
 				m = self.connection.popMessage()

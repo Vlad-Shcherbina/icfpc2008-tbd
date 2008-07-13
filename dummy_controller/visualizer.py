@@ -96,13 +96,14 @@ class Visualizer(Thread):
 
 		glClearColor(0.,0.,0.,1.)
 		glutDisplayFunc(self.display)
-		glutIdleFunc(self.idle)
+		glutIdleFunc(self._idle)
 		if (self.keyHandler):
 			glutKeyboardFunc(self.keyHandler)
 
 		glutMainLoop()
 		
-	def idle(self):
+	def _idle(self):
+		# because it is not a message handler
 		if self.terminate:
 			if self.window:
 				glutDestroyWindow(self.window)

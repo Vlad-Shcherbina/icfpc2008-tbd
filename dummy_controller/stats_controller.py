@@ -38,10 +38,20 @@ class Stater(object):
 		"""message handler"""
 		self.state = 0
 		self.sendDelayIndex = 0
-		self.maxSendDelayIndex = 5 
+		self.maxSendDelayIndex = 10 
 		self.sendDelayStep = 0.01
     	
-	def processTelemetry(self,tele):
+	def idle(self):
+		"""message handler"""
+		if self.cereb.runInProgress:
+			if self.state == 2 and \
+				time.clock()>self.timeToSend:
+				self.sendTime = time.clock()
+				self.cereb.forwardControl = 1
+				self.state = 1
+				
+    
+ 	def processTelemetry(self,tele):
 		"""message handler"""
 		if hasattr(self,"prevTime"):
 			self.telemetryIntervals.append(
@@ -50,10 +60,9 @@ class Stater(object):
 
 		if self.state == 0:
 			if tele.ctl == "--":
-				time.sleep(self.sendDelayStep*self.sendDelayIndex)
-				self.sendTime = time.clock()
-				self.cereb.forwardControl = 1
-				self.state = 1
+				sendDelay = self.sendDelayStep*self.sendDelayIndex
+				self.timeToSend = time.clock()+sendDelay 
+				self.state = 2
 		elif self.state == 1:
 			if tele.ctl != "--":
 				self.delays[self.sendDelayIndex].\
