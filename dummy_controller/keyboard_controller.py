@@ -27,17 +27,7 @@ if visualize:
 	from visualizer import *
 	vis = Visualizer(cerebellum, staticMap, keyboardHandler)
 	
-	def predictionDrawer():
-		rover = RoverState(cerebellum.teles[-1])
-		commands = []
-		trace = predict(physicalValues,rover,commands,0.1,5)
-		glBegin(GL_POINTS)
-		glColor3f(1,1,0)
-		for p in trace:
-			glVertex3f(p.x,p.y,1)
-		glEnd()
-		
-	vis.registerDrawer(predictionDrawer)
+	vis.registerDrawer(PredictorDrawer(cerebellum, physicalValues))
 	
 	vis.start()
 

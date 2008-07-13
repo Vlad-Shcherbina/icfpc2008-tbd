@@ -28,6 +28,14 @@ def subtractAngles(a,b):
         res -= 360
     return res
 
+def reverse(angle):
+	"""
+	Reverses the angle direction 180 degrees, keeping it with in -180/180 range
+	"""
+	angle += 180
+	if angle > 180: angle -= 360
+	return angle
+
 def lerp(a, b, q):
     return a * (1 - q) + b * q
 

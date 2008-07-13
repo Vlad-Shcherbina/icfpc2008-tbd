@@ -176,7 +176,7 @@ class StaticMap(object):
 				glColor3f(1,1,1)
 			circle(obj.x,obj.y,obj.radius,segments = 20)
 
-		self.tree.draw()
+		if self.tree: self.tree.draw()
 	
 
 #	for o in node.objects:

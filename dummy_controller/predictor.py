@@ -3,6 +3,26 @@ from math import *
 from copy import copy
 
 
+class PredictorDrawer:
+	
+	def __init__(self, cerebellum, physicalValues):
+		self.cerebellum = cerebellum
+		self.physicalValues = physicalValues
+
+	def __call__(self):
+		from visualizer import *
+		if not self.cerebellum.teles:
+			return		
+		rover = RoverState(self.cerebellum.teles[-1])
+		commands = []
+		trace = predict(self.physicalValues, rover, commands,0.1,5)
+		glBegin(GL_POINTS)
+		glColor3f(1,1,0)
+		for p in trace:
+			glVertex3f(p.x,p.y,1)
+		glEnd()
+
+
 class PhysicalValues(object):
     """
     This class is responsible for estimation of all simulation parameters
