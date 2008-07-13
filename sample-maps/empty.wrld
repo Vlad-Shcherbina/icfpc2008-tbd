@@ -8,7 +8,7 @@
         "turn" : 20,
         "hardTurn" : 60,
         "frontView" : 60,
-	"rotAccel" : 120,
+		"rotAccel" : 120,
         "rearView" : 30
       },
     "martianParams" : {
@@ -26,6 +26,16 @@
     "boulders" : [
       ],
     "runs" : [
+        {
+            "vehicle" : {
+                "x" : -20,
+                "y" : 0,
+                "dir" : 0
+              },
+            "enemies" : [
+
+              ]
+          },
         {
             "vehicle" : {
                 "x" : -20,
