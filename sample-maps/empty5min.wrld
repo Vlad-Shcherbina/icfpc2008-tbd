@@ -1,6 +1,6 @@
 {
     "size" : 100,
-    "timeLimit" : 60000,
+    "timeLimit" : 300000,
     "vehicleParams" : {
         "maxSpeed" : 20,
         "accel" : 2,
