@@ -4,9 +4,13 @@ psyco.full()
 
 from misc import *
 from controller import connection,cerebellum,visualize,mainLoop,staticMap
+from neuroactivity.drunkygohome import DrunkyGoHome
 ##############
 
 cerebellum.registerMessageHandler(TestHandler())
+
+if False:
+	cerebellum.registerMessageHandler(DrunkyGoHome(cerebellum))
 
 #cerebellum.command = ("moveTo",0,0)
 
