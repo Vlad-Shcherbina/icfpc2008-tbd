@@ -1,5 +1,5 @@
 {
-    "size" : 50,
+    "size" : 100,
     "timeLimit" : 30000,
     "vehicleParams" : {
         "maxSpeed" : 20,
@@ -28,18 +28,8 @@
     "runs" : [
         {
             "vehicle" : {
-                "x" : -20,
-                "y" : 0,
-                "dir" : 0
-              },
-            "enemies" : [
-
-              ]
-          },
-        {
-            "vehicle" : {
-                "x" : -20,
-                "y" : 0,
+                "x" : -45,
+                "y" : 10,
                 "dir" : 0
               },
             "enemies" : [
