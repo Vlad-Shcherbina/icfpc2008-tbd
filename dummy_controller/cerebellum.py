@@ -181,8 +181,7 @@ class Cerebellum(object):
 		"""message dispatcher"""
 		if isinstance(message,InitData):
 			for h in self.handlers:
-				try: h.processInitData(message)
-				except: pass
+				if hasattr(h, "processInitData"): h.processInitData(message)
 		elif isinstance(message,Telemetry):
 			if not self.runInProgress:
 				self.runInProgress = True
@@ -193,13 +192,11 @@ class Cerebellum(object):
 
 		elif isinstance(message,Event):
 			for h in self.handlers:
-				try: h.processEvent(message)
-				except: pass
+				if hasattr(h, "processEvent"): h.processEvent(message)
 
 		elif isinstance(message,EndOfRun):
 			for h in self.handlers:
-				try: h.runFinish(self.currentRun)
-				except: pass
+				if hasattr(h, "runFinish"): h.runFinish(self.currentRun)
 
 			self.currentRun += 1
 			if self.currentRun == maxRuns:
