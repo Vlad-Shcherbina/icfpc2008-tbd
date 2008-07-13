@@ -180,6 +180,8 @@ class Cerebellum(object):
 	def processTelemetry(self,tele):
 		"""message handler"""
 
+		self.connection.sendCommand(";")
+
 		self.timeMinusTimeStamp = time.clock()-tele.timeStamp
 		
 		# clean up commands
@@ -227,24 +229,27 @@ class Cerebellum(object):
 					c[2]="outdated" 
 
 			# annihilate outdated pairs
+			def findPair(pos,neg,annihilated):
+				posIndex = None
+				negIndex = None
+				for i in range(len(self.commands)):
+					if posIndex is None and \
+						self.commands[i][1]==pos and \
+						(self.commands[i][2]=="annihilated")==annihilated:
+						posIndex = i
+					if negIndex is None and \
+						self.commands[i][1]==neg and \
+						(self.commands[i][2]=="annihilated")==annihilated:
+						negIndex = i
+				if posIndex is not None and negIndex is not None:
+					return (posIndex,negIndex)
+				else:
+					return None
 			for pos,neg in [("a","b"),("l","r")]:
-				while True:
-					posIndex = None
-					negIndex = None
-					for i in range(len(self.commands)):
-						if posIndex is None and \
-							self.commands[i][1]==pos and \
-							self.commands[i][2]!="annihilated":
-							posIndex = i
-						if negIndex is None and \
-							self.commands[i][1]==neg and \
-							self.commands[i][2]!="annihilated":
-							negIndex = i
-					if posIndex is not None and negIndex is not None:
-						self.commands[posIndex][2]="annihilated"
-						self.commands[negIndex][2]="annihilated"
-					else:
-						break
+				pair = findPair(pos,neg,annihilated=False)
+				if pair is not None:
+					self.commands[pair[0]][2]="annihilated"
+					self.commands[pair[1]][2]="annihilated"
 			#self.commandsSemaphore.release()
 						
 						
