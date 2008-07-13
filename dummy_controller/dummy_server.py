@@ -4,7 +4,7 @@ import socket
 import time
 import re
 import errno
-import random
+from random import *
 import math
 
 host = ""
@@ -21,16 +21,24 @@ print 'Connected by', addr
 conn.settimeout(0.1)
 
 
-accel = 1
-brake = 1
+accel = 2
+brake = 2
 drag = 0.1
 
 rotAccel = 150
-maxTurn = 25
-maxHardTurn = 50
+maxTurn = 50
+maxHardTurn = 100
 
-conn.send("I 20 20 999.9 0.5 3 %s %s %s ;" %
-			(math.sqrt(accel/drag),maxTurn,maxHardTurn) )
+mapSize = 30
+
+conn.send("I %s %s 999.9 0.5 3 %s %s %s ;" %
+			(mapSize,mapSize,math.sqrt(accel/drag),maxTurn,maxHardTurn) )
+
+
+objs="".join([
+	"b %s %s %s "%((random()-0.5)*mapSize,(random()-0.5)*mapSize,random()*5)
+	for i in range(20)])
+
 
 x = 5
 y = 6
@@ -40,13 +48,14 @@ data = ""
 acc = 0
 rot = 0
 rotSpeed = 0
+prevTime = time.clock()
 for i in range(1):
 	t = 0
-	time.sleep(0.2)
+	time.sleep(0.1)
 	for i in range(1000):
 		try:
 			data += conn.recv(1024)
-			time.sleep(0.01)
+			time.sleep(0.001)
 		except socket.timeout:
 			pass
 		except socket.error,e:
@@ -70,14 +79,19 @@ for i in range(1):
 				rot -= 1
 
 		ctl = "b-a"[acc+1]+"Ll-rR"[rot+2]
+
 		print ctl
 		conn.send(
 			"T %s %s %s %s %s %s "%(t*1000,ctl,x,y,angle,v) +
 			"b -4.000 7.000 1.000 " +
+			"b -1.000 5.000 1.000 " +
+			objs +
 			"m -2.000 8.000 90.0 9.100 ;")
 
-		dt = 0.02+random.random()*0.02
-		time.sleep(dt)
+		objs = ""
+		time.sleep(0.01+random()*0.005)
+		dt = time.clock()-prevTime
+		prevTime += dt
 		t += dt
 		x += math.cos(math.radians(angle))*v*dt
 		y += math.sin(math.radians(angle))*v*dt
@@ -90,7 +104,7 @@ for i in range(1):
 			rotSpeed -= dt*rotAccel
 		angle += rotSpeed*dt
 
-		v += dt*([-brake,0,accel][acc+1] - drag*v*v + random.random()*0.001)
+		v += dt*([-brake,0,accel][acc+1] - drag*v*v + random()*0.001)
 
 	conn.send("S 0 ;")
 	conn.send("E 0 999.9 ;")

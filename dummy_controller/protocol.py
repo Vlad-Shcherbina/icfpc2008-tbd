@@ -145,7 +145,6 @@ class EndOfRun(object):
 		time,score
 	"""
 	def __init__(self,command):
-		print "ENDOFRUN MESSAGE CREATION"
 		m = endOfRunRE.match(command)
 		assert m
 		self.__dict__ = m.groupdict()
@@ -197,21 +196,20 @@ class Connection(Thread):
 			try:
 				received = self.socket.recv(1024)
 			except socket.error,e:
-				print 'DEBUG: socket error on receive'
+				print 'proto: DEBUG: socket error on receive'
 				self.running = False
 				#raise
-			print "received",received
 			if len(received) == 0: # socket closed
 				self.running = False
-				continue
+				break
 			self.buf += received
 			m = re.search(";",self.buf)
 			while m:
 				command = self.buf[:m.end()]
-				print command
 				self.addMessage(eventTypes[command[0]](command))
 				self.buf = self.buf[m.end():]
 				m = re.search(";",self.buf)
+		print "proto: thread normally terminated"
 			
 	def stopRun(self):
 		self.running = False
@@ -247,9 +245,10 @@ class Connection(Thread):
 		try:
 			self.socket.sendall(command)
 		except:
-			print "[DEBUG] socket error on send"
+			print "proto: [DEBUG] socket error on send"
 			pass
 
 	def close(self):
+		self.running = False
 		self.socket.close()
 	

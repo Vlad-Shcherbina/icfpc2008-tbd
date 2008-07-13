@@ -17,12 +17,4 @@ connection = Connection(ip,port)
 cerebellum = Cerebellum(connection)
 
 def mainLoop():
-    connection.start()
     cerebellum.mainLoop()
-#    sys.exit(0)
-#    print "controller terminating"
-
-    if visualize:
-        vis.terminate = True
-        vis.join()
-        sys.exit(0)    

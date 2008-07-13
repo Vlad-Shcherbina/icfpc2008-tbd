@@ -29,7 +29,7 @@ class Cerebellum(object):
 
 		self.currentRun = 0
 		self.messages = []
-		self.newRun()
+		self.prepairForNewRun()
 
 		self.handlers = []
 		self.registerMessageHandler(self)
@@ -56,12 +56,6 @@ class Cerebellum(object):
 			runFinish()
 		"""
 		self.handlers.append(handler)
-
-	def update(self):
-		while self.connection.hasMessage():
-			m = self.connection.popMessage()
-			self.processMessage(m)
-			self.messages.append(m)
 
 	def cmd(self,command):
 		self.connection.sendCommand(command)
@@ -107,20 +101,32 @@ class Cerebellum(object):
 			self.forwardControl = choice([0]*8+[1]+[-1])
 
 	def mainLoop(self):
-		while self.connection.isRunning():
-			self.update()
-			time.sleep(0.01)
+		self.connection.start()
+		while True:
+			time.sleep(0.002)
+			running = self.connection.isRunning()
+			while self.connection.hasMessage():
+				m = self.connection.popMessage()
+				self.processMessage(m)
+				#self.messages.append(m) # memory leak was here I think
+			if not running:
+				break
+		self.connection.join()
 
-	def newRun(self):
+	def prepairForNewRun(self):
+		"""
+		As problem document states, at this moment we have at least 1 second 
+		before run start. But... everybody lies
+		"""
 		self.runInProgress = False
 		self.accel = None
 		self.teles = []
 		self.numTeles = 0
 		self.clockOffset = None
-		print "*"*20, "\nNew Run!\n", "*"*20
 
 	def runStart(self,runNumber):	
 		"""message handler"""
+		print "*"*20, "\nNew Run!\n", "*"*20
 		self._forwardControl = 0
 		self._turnControl = 0
 
@@ -233,10 +239,10 @@ class Cerebellum(object):
 					h.runFinish(self.currentRun)
 			self.currentRun += 1
 			if self.currentRun == maxRuns:
-				print "the end"
+				print "maxRuns reached"
 				self.connection.close()
-				exit(0)
-			self.newRun()
+				return
+			self.prepairForNewRun()
 
 	def esteemParams(self):
 		self.minSQ.solve()

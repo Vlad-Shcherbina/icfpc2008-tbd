@@ -4,7 +4,7 @@ psyco.full()
 from threading import Thread	
 import sys
 from math import *
-from random import random
+from random import *
 import time
 
 from OpenGL.GLUT import *
@@ -77,7 +77,6 @@ def drawNode(node):
 class Visualizer(Thread):
 	def __init__(self, cerebellum, staticMap, keyHandler = None):
 		Thread.__init__(self)
-		#self.setDaemon(True)
 		self.terminate = False
 		
 		self.cerebellum = cerebellum
@@ -113,6 +112,7 @@ class Visualizer(Thread):
 		glutPostRedisplay()
 
 	def processInitData(self,initData):
+		"""message handler"""
 		self.initData = initData
 
 	def processTelemetry(self,tele):
@@ -159,8 +159,7 @@ class Visualizer(Thread):
 			not hasattr(self,"tele") or\
 			not self.cerebellum.runInProgress: 
 			return
-		if self.terminate:
-			return
+
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
 		glOrtho(-self.initData.dx*0.5,

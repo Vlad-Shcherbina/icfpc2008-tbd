@@ -16,8 +16,12 @@ staticMap = StaticMap()
 cerebellum.registerMessageHandler(staticMap)
 
 if visualize:
-	from visualizer import Visualizer
-	vis = Visualizer(cerebellum, staticMap)
-	vis.start()
+    from visualizer import Visualizer
+    vis = Visualizer(cerebellum, staticMap)
+    vis.start()
 
 mainLoop()
+
+if visualize:
+    vis.terminate = True
+    vis.join()
