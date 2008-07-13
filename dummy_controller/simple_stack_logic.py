@@ -100,7 +100,7 @@ class SimpleStackLogic(object):
     
     def checkReached(self, x, y):
         tx, ty = self.targets[0]
-        if sqrt((tx-x)**2 + (ty-y)**2) < 0.5: # less than a rover's radius
+        if sqrt((tx-x)**2 + (ty-y)**2) < 1: # less than 1
             self.targets.pop(0)
                     
     
