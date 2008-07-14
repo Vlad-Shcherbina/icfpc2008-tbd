@@ -2,4 +2,4 @@ cd src/dummy_controller
 pwd
 export PYTHONPATH=../numpy-1.1.0/build/lib.linux-i686-2.5:../psyco-1.6/build/lib.linux-i686-2.5
 echo $PYTHONPATH
-python drunk_controller.py $*
+python stack_controller.py $*
