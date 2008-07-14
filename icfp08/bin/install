@@ -1,1 +1,11 @@
 echo "Feel the force!"
+
+src/numpy-1.1.0/setup.py build
+
+cd src/psyco-1.6/
+chmod 0777 setup.py
+setup.py build
+cd ../..
+
+find . -path *.py[oc] -delete
+echo "False" > src/dummy_controller/visualize.config
