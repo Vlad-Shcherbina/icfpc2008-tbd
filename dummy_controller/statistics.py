@@ -1,11 +1,18 @@
+from compiler.ast import Pass
 import os
 from misc import * 
 
 class Stats(object):
 	def __init__(self):
+		#################
+		# private variables
+		self.timeOffsetFilter = None
+		self.currentControl = (0, 0)
+		self.commandsInPrevFrame
+		
 		##################
 		# publicly available accumulated statistics
-		self.timeOffset = 0.0
+		
 		self.x = 0.0
 		self.y = 0.0
 		self.dir = 0.0
@@ -15,16 +22,49 @@ class Stats(object):
 		self.maxTurn = 0.0
 		self.maxHardTurn = 0.0
 		
-		#################
-		# private variables
-		self.timeOffsetFilter = None
-	
+		self.lastTelemetry = None 
 
+	def getTimeOffset(self):
+		return self.timeOffsetFilter.value
+	timeOffset = property(getTimeOffset)
+	
+	def getFrameRelativeTime(self):
+		return time.clock() - self.timeOffset - self.lastTelemetry.timeStamp
+	frameRelativeTime = property(getFrameRelativeTime)
+		
+	
+	
 	# public interface invoked by cerebellum
 	def processInitData(self, message):
 		self.maxSpeed = message.maxSpeed
 		self.maxTurn = message.maxTurn
 		self.maxHardTurn = message.maxHardTurn
+	
+	def runStart(self, runNumber):
+		self.timeOffsetFilter = None
+		self.lastTelemetry = None
+		pass
+	
+	def processTelemetry(self, message):
+		# time offset
+		newOffset = message.localTimeStamp - message.timeStamp
+		if self.timeOffsetFilter is None:
+			self.timeOffsetFilter = FOFilter(0.5, newOffset)
+		else: 
+			diff = self.timeOffsetFilter.value - newOffset 
+			self.timeOffsetFilter.next(newOffset)
+#			print "%6.3f %6.3f %6.3f" % (message.localTimeStamp, self.timeOffsetFilter.value, diff)
+			
+		self.lastTelemetry = message
+	
+	def processEvent(self, message):
+		pass
+	
+	def commandSent(self, control):
+		pass 
+
+class FakeStats(object):
+	def processInitData(self, message):
 		pass
 	
 	def runStart(self, runNumber):
@@ -37,14 +77,14 @@ class Stats(object):
 		pass
 	
 	def commandSent(self, control):
-		pass 
-
+		pass
+	
 # returns singlton stats object
 _stats = None
 def getStats():
 	global _stats
 	if (_stats is None):
-		_stats = Stats()
+		_stats = FakeStats() #it isn't used anyway
 	return _stats
 
 
