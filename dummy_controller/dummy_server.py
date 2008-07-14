@@ -21,16 +21,18 @@ print 'Connected by', addr
 conn.settimeout(0.1)
 
 
-accel = 2
-brake = 2
-drag = 0.1
+mapSize = 80
+timeLimit = 300
+objCount = 0
 
-rotAccel = 50
+accel = 3
+brake = 2
+drag = 0.02
+
+rotAccel = 100
 maxTurn = 50
 maxHardTurn = 100
 
-mapSize = 50
-timeLimit = 30
 
 conn.send("I %s %s %s 0.5 3 %s %s %s ;" %
 			(mapSize,mapSize,timeLimit*1000,
@@ -40,7 +42,6 @@ conn.send("I %s %s %s 0.5 3 %s %s %s ;" %
 objs="".join([
 	"b %s %s %s "%((random()-0.5)*mapSize,(random()-0.5)*mapSize,random()*5)
 	for i in range(00)])
-
 
 x = -20
 y = 6
@@ -109,6 +110,8 @@ for i in range(1):
 		angle += rotSpeed*dt
 
 		v += dt*([-brake,0,accel][acc+1] - drag*v*v + random()*0.001)
+		if v<0:
+			v = 0
 
 	conn.send("S 0 ;")
 	conn.send("E 0 999.9 ;")
