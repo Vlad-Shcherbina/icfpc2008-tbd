@@ -1,4 +1,3 @@
-from uuid import _last_timestamp
 import time
 from random import choice
 from math import *
@@ -168,7 +167,7 @@ class Cerebellum(object):
 			if localMessages:
 				moreWaiting = False
 				for m in reversed(localMessages):
-					if m is Telemetry:
+					if isinstance(m, Telemetry):
 						m.moreMessagesWaiting = moreWaiting
 						moreWaiting = True
 				for m in localMessages:
