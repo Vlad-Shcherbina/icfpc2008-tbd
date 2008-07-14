@@ -9,6 +9,7 @@ from controller import connection,cerebellum,visualize,staticMap,mainLoop
 from predictor import *
 import predictor
 import statistics
+from pathfinders import *
 
 ##############
 
@@ -48,54 +49,8 @@ def beacons(rover,trace,addTime):
 		results.append(trace[-1])
 	return results
 
-def moveTo(rover,targetX,targetY,targetRadius=5,dt=None):
-	if dt is None:
-		dt = DEFAULT_DT
-	rover = copy(rover)
-	commands = []
-	curCommand = 0
-	trace = []
-	n = 0
-	
-	rover = serverMovementPredictor.predict(serverMovementPredictor.latency,
-										    rover)[-1]
-	
-	while (rover.x-targetX)**2+(rover.y-targetY)**2>targetRadius**2 and n<200:
-		command = ControlRecord((0,0),
-							    rover.localT)
 
-		desiredDir=degrees(atan2(targetY-rover.y,
-							     targetX-rover.x))
-		dDir = subtractAngles(desiredDir, rover.dir)
-
-		if dDir>30:
-			command.turnControl = 2
-		elif dDir>3:
-			command.turnControl = 1
-		elif dDir>-3:
-			command.turnControl = 0
-		elif dDir>-30:
-			command.turnControl = -1
-		else:
-			command.turnControl = -2		
-
-		dirX = cos(radians(rover.dir))
-		dirY = sin(radians(rover.dir))
-		dot = dirX*(targetX-rover.x)+dirY*(targetY-rover.y)
-		if dot>0:
-			command.forwardControl = 1
-		else:
-			command.forwardControl = 0
-
-			
-		commands.append(command)
-		curCommand = roverSimulationStep(rover, dt, commands, curCommand)
-		trace.append(copy(rover))
-		n += 1
-
-	return trace
-
-class RailController(object):
+class Rail(object):
 	def __init__(self):
 		pass
 	
@@ -108,7 +63,6 @@ class RailController(object):
 		self.pendingCommands = []
 		self.rover = None
 		self.beacons = []
-		self.targets = []
 		self.trace = []
 		self.bestTrace = None
 		
@@ -149,13 +103,6 @@ class RailController(object):
 					ControlRecord((fc,tc),tele.localTimeStamp+smp.latency),
 					]
 				candidates.append(cmds)
-		for fc in range(-1,2):
-			for tc in range(-2,3):
-				cmds = [
-					ControlRecord((fc,tc),tele.localTimeStamp+smp.latency),
-					ControlRecord((0,0),tele.localTimeStamp+smp.latency+0.02)
-					]
-				#candidates.append(cmds)
 
 		for cmds in candidates:
 			tr = predict(actualRover,cmds,lookAhead+smp.latency,dt=0.03)
@@ -212,22 +159,9 @@ class RailController(object):
 				glVertex2f(p.x,p.y)
 		glEnd()
 
-			
-		glBegin(GL_LINES)
-		glColor3f(0,1,0)
-		for p in serverMovementPredictor.predict(1):
-			glVertex2f(p.x,p.y)
-		glEnd()
-		
 		glColor3f(1,0,0)
 		for b in self.beacons:
 			circle(b.x,b.y,0.5)
-			
-		glColor3f(1,0,1)
-		for t in self.targets:
-			circle(t[0],t[1],2)
-		
-		
 
 	def runFinish(self,currentRun):
 		"""message handler"""
@@ -235,33 +169,55 @@ class RailController(object):
 		#statistics.showFinalStats()		
 
 
-railController = RailController()
-cerebellum.registerMessageHandler(railController)		
-
-def mouseHandler(button,x,y):
-	from OpenGL.GLUT import *
+class WayPointController(object):
+	def __init__(self,rail,pathFinder):
+		self.rail = rail
+		self.pathFinder = pathFinder
 	
-	if glutGetModifiers() & GLUT_ACTIVE_SHIFT == 0:
-		railController.targets = [(x,y)]
-		railController.setRail(moveTo(railController.rover,x,y,2))
-	else:
-		railController.targets.append((x,y))
-		if len(railController.trace) == 0:
-			railController.trace = [railController.rover]
-		railController.setRail(
-			railController.trace + moveTo(railController.trace[-1],x,y,2))
+	def runStart(self,currentRun):
+		self.wayPoints = []
+		
+	def mouseHandler(self,button,x,y):
+		from OpenGL.GLUT import *
+	
+		if glutGetModifiers() & GLUT_ACTIVE_SHIFT == 0:
+			start = self.rail.rover
+			self.wayPoints = []
+			self.rail.setRail([])
+		else:
+			if len(rail.trace) == 0:
+				start = rail.rover
+			else:
+				start = rail.trace[-1]
+		path = self.pathFinder(start,x,y)
+		if len(path)>0:
+			self.wayPoints.append((x,y))
+			rail.setRail(self.rail.trace + path)
+	
+	def draw(self):
+		glColor3f(1,0,1)
+		for w in self.wayPoints:
+			circle(w[0],w[1],2)
 
+
+rail = Rail()
+cerebellum.registerMessageHandler(rail)
+
+wpController = WayPointController(rail,moveTo)
+cerebellum.registerMessageHandler(wpController)		
 
 #pd = PredictionDrawer()
 #cerebellum.registerMessageHandler(pd)
 
 if visualize:
 	from visualizer import *
-	vis = Visualizer(cerebellum, staticMap, keyboardHandler, mouseHandler)
+	vis = Visualizer(cerebellum, staticMap, 
+					 keyboardHandler, wpController.mouseHandler)
 	
 	#vis.registerDrawer(pd)
 	
-	vis.registerDrawer(railController.draw)
+	vis.registerDrawer(rail.draw)
+	vis.registerDrawer(wpController.draw)
 	
 	vis.start()
 
