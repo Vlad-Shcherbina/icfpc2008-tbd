@@ -161,12 +161,22 @@ class Cerebellum(object):
 						h.idle()
 			running = self._connection.state == ConState_Running
 			
+			localMessages = []
 			while self._connection.hasMessage():
-				m = self._connection.popMessage()
-				self.processMessage(m)
+				localMessages.append(self._connection.popMessage())
+				
+			if localMessages:
+				moreWaiting = False
+				for m in reversed(localMessages):
+					if m is Telemetry:
+						m.moreMessagesWaiting = moreWaiting
+						moreWaiting = True
+				for m in localMessages:
+					self.processMessage(m)
 			else:
 				time.sleep(0.001)
 				sleepTime += 0.001
+				
 				
 			if not running:
 				break

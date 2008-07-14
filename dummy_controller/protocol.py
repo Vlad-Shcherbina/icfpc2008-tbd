@@ -58,11 +58,13 @@ class InitData(object):
 
 class Telemetry(object):
 	__slots__ = (
-		"localTimeStamp", "timeStamp", 
+		"timeStamp", 
 		"ctl",
 		"x", "y",
 		"dir", "speed",
-		"objects")
+		"objects",
+		"localTimeStamp",
+		"moreMessagesWaiting")
 	
 	def __init__(self, command):
 		self.localTimeStamp = time.clock()
@@ -70,7 +72,7 @@ class Telemetry(object):
 		slots = self.__class__.__slots__
 		
 		pos = 1 
-		for s in slots[1:-1]:
+		for s in slots[:-3]: #skip objects, localTimeStamp and moreMessagesWaiting
 			if s != "ctl":
 				setattr(self, s, float(command[pos]))
 			else:
