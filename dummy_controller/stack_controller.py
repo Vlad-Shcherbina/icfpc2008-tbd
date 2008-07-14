@@ -19,15 +19,11 @@ def main():
 	logic = SimpleStackLogic(cerebellum,staticMap)
 	cerebellum.registerMessageHandler(logic)
 
-	ins = Insurance()
-	cerebellum.registerMessageHandler(ins)
-		
 	if visualize:
 		from visualizer import Visualizer
 		import simple_stack_visualizer
 		vis = Visualizer(cerebellum, staticMap)
 		vis.registerDrawer(simple_stack_visualizer.createDrawer(logic))
-		vis.registerDrawer(ins.draw)
 		vis.start()
 	
 	mainLoop()

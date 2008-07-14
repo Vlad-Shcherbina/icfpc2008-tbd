@@ -16,14 +16,14 @@ from protocol import *
 
 name = 'suka glut'
 
-def circle(x,y,r,segments=50):
+def circle(x,y,r,segments=12):
 	glBegin(GL_LINE_LOOP)
 	for i in range(segments):
 		a = 2*3.1415/segments*i
 		glVertex2f(x+r*cos(a),y+r*sin(a))
 	glEnd()
 
-def sector(x,y,r,sa,ea,segments=20):
+def sector(x,y,r,sa,ea,segments=10):
 	glBegin(GL_LINE_LOOP)
 	for i in range(segments):
 		a = sa + (ea-sa)/segments*i

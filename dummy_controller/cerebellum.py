@@ -8,6 +8,8 @@ from misc import *
 from predictor import *
 import statistics
 
+from insurance import *
+
 
 class Cerebellum(object):
 	"""
@@ -26,6 +28,8 @@ class Cerebellum(object):
 		self.handlers = []
 		self.command = None
 		self.runInProgress = False
+		
+		self.insurance = Insurance()
 		
 		self._control = (0, 0) # acceleration, rotation
 		
@@ -238,10 +242,13 @@ class Cerebellum(object):
 				self.runStart(self.currentRun)
 #				self.stats.runStart(self.currentRun)
 				self.dispatchToHandlers("runStart", self.currentRun)
+
+			self.insurance.runStart(self.currentRun)
 			
-			self.processTelemetry(message)
 #			self.stats.processTelemetry(message)
 			self.dispatchToHandlers("processTelemetry", message)
+			self.insurance.processTelemetry(message)
+			self.processTelemetry(message)
 
 		elif isinstance(message,Event):
 #			self.stats.processEvent(message)
