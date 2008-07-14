@@ -1,0 +1,51 @@
+=========== spiral.wrld
+waiting for client connection on port 17676
+starting round
+Round 1: reached home; score = 20540
+starting round
+Round 2: reached home; score = 17330
+starting round
+Round 3: reached home; score = 17590
+starting round
+Round 4: reached home; score = 16240
+starting round
+Round 5: reached home; score = 16350
+. 
+=========== spiral.wrld 
+waiting for client connection on port 17676
+starting round
+Round 1: reached home; score = 20540
+starting round
+Round 2: reached home; score = 17330
+starting round
+Round 3: reached home; score = 17620
+starting round
+Round 4: reached home; score = 16300
+starting round
+Round 5: reached home; score = 16230
+. 
+=========== small-08.wrld 
+waiting for client connection on port 17676
+starting round
+Round 1: reached home; score = 6060
+starting round
+Round 2: crashed into crater; score = 104190
+starting round
+Round 3: reached home; score = 46420
+starting round
+Round 4: reached home; score = 36560
+starting round
+Round 5: reached home; score = 40540
+. 
+=========== small-scatter.wrld 
+waiting for client connection on port 17676
+starting round
+Round 1: reached home; score = 17570
+starting round
+Round 2: reached home; score = 20460
+starting round
+Round 3: reached home; score = 22210
+starting round
+Round 4: reached home; score = 20120
+starting round
+Round 5: reached home; score = 17730
