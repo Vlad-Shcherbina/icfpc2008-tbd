@@ -60,6 +60,9 @@ class Cerebellum(object):
 			return
 		
 		control = self.clampControl(control)
+		
+		control = self.insurance.fixControl(control)
+		
 		cmd = "" 
 		
 		while (self._control != control):

@@ -1,5 +1,5 @@
 from predictor import *
-from controller import *
+import controller
 
 class Insurance(object):
     """
@@ -7,36 +7,40 @@ class Insurance(object):
     high-level logic
     """
     def __init__(self):
+        self.predictedTrace = []
         pass
     def runStart(self,currentRun):
         """message handler"""
         self.rover = None
 
-    def processTelemetry(self,tele):
-        """message handler"""
-        
-        self.lookAhead = 1.0
-        
+    def fixControl(self,control):
         smp = serverMovementPredictor
+
+        #print "brake: ",physicalValues.brake
+        if abs(physicalValues.brake)>1e-2:
+            self.lookAhead = min(smp.rover.speed/abs(physicalValues.brake),3)
+        else:
+            self.lookAhead = 0.567
+        print "look ahead ",self.lookAhead
         
         actualRover = smp.predict(smp.latency)[-1]
-        if smp.rover is None:
-            self.predictedTrace = []
-            return
-        self.predictedTrace = predict(actualRover,[],self.lookAhead,dt=0.05)
-
-        return
+        cmd = ControlRecord(control)
+        self.predictedTrace = predict(actualRover,[cmd],self.lookAhead,dt=0.05)
         
         badness = self.traceBadness(self.predictedTrace)
-        
         if badness>0:
-            print "ATTENTION! DANGER",badness
-            #print 50*"="
-            self.avoid(actualRover)
+            print "danger",badness
+            control = (-1,-control[1])
+        
+        return control
+
+    def processTelemetry(self,tele):
+        """message handler"""
+        return
         
     def traceBadness(self,trace):
         for p in trace:
-            obj = staticMap.intersect(p.x, p.y)
+            obj = controller.staticMap.intersect(p.x, p.y)
             if obj is not None:
                 if obj.kind == "c":
                     return 10

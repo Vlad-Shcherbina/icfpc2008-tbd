@@ -25,6 +25,7 @@ def main():
 		vis = Visualizer(cerebellum, staticMap)
 		vis.registerDrawer(simple_stack_visualizer.createDrawer(logic))
 		vis.start()
+		vis.registerDrawer(cerebellum.insurance.draw)
 	
 	mainLoop()
 	
