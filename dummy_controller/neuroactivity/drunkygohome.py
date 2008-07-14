@@ -23,7 +23,7 @@ class DrunkyGoHome(object):
 	
 	def directcmdx(self, c):
 		print "--", c
-		self.cerebellum.connection.sendCommand(c)
+		self.cerebellum._connection.sendCommand(c)
 		#self.cerebellum.cmd(c)
 
 	def processInitData(self, initData):

@@ -4,6 +4,7 @@ set KNOPPIX=knoppix
 rem set CONTROLLER=stack_controller.py
 rem set CONTROLLER=keyboard_controller.py
 set CONTROLLER=drunk_controller.py
+rem set CONTROLLER=root.py
 rem set CONTROLLER=rail_controller.py
 
 
@@ -17,7 +18,7 @@ rem empty30s.wrld
 rem small-scatter-slowrot.wrld
 rem map_rotAccel40_500_c10_b10_r4_e50.wrld
 
-start ..\runsim.bat map_empty_1500_c20_b60_r8_e4.wrld
+rem start ..\runsim.bat map_empty_1500_c20_b60_r8_e4.wrld
 @sleep 2
 
 python -OO %CONTROLLER% %KNOPPIX% 17676 
