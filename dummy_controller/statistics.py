@@ -1,26 +1,51 @@
 import os
 from misc import * 
 
+class Stats(object):
+	def __init__(self):
+		##################
+		# publicly available accumulated statistics
+		self.timeOffset = 0.0
+		self.x = 0.0
+		self.y = 0.0
+		self.dir = 0.0
+		self.speed = 0.0
+		
+		self.maxSpeed = 0.0
+		self.maxTurn = 0.0
+		self.maxHardTurn = 0.0
+		
+		#################
+		# private variables
+		self.timeOffsetFilter = None
+	
 
+	# public interface invoked by cerebellum
+	def processInitData(self, message):
+		self.maxSpeed = message.maxSpeed
+		self.maxTurn = message.maxTurn
+		self.maxHardTurn = message.maxHardTurn
+		pass
+	
+	def runStart(self, runNumber):
+		pass
+	
+	def processTelemetry(self, message):
+		pass
+	
+	def processEvent(self, message):
+		pass
+	
+	def commandSent(self, control):
+		pass 
 
-# public interface invoked by cerebellum
-def processInitData(message):
-	pass
-
-def runStart(runNumber):
-	pass
-
-def processTelemetry(message):
-	pass
-
-def processEvent(message):
-	pass
-
-def commandSent(control):
-	pass 
-
-
-
+# returns singlton stats object
+_stats = None
+def getStats():
+	global _stats
+	if (_stats is None):
+		_stats = Stats()
+	return _stats
 
 
 
