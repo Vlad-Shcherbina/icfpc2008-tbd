@@ -146,12 +146,21 @@ def calcCollision(vx, vy, tx, ty, objects):
         elif o2 is None:
             return obj, d_min, alt_ox_min, alt_oy_min
         else: # fuck...
-            o1, new_d1, new_ox1, new_oy1 = calcTargetsChainAvoidance(vx, vy, ox_min, oy_min, d, o1, objects)
-            o2, new_d2, new_ox2, new_oy2 = calcTargetsChainAvoidance(vx, vy, alt_ox_min, alt_oy_min, d, o2, objects)
-            if new_d1 < new_d2:
-                return o1, new_d1, new_ox1, new_oy1
+            trgt1 = calcTargetsChainAvoidance(vx, vy, ox_min, oy_min, d, o1, objects)
+            trgt2 = calcTargetsChainAvoidance(vx, vy, alt_ox_min, alt_oy_min, d, o2, objects)
+            if trgt1 is None and trgt2 is None:
+                return obj, d_min, ox_min, oy_min
+            elif trgt1 is None:
+                return trgt2
+            elif trgt2 is None:
+                return trgt1
             else:
-                return o2, new_d2, new_ox2, new_oy2
+                o1, new_d1, new_ox1, new_oy1 = trgt1
+                o2, new_d2, new_ox2, new_oy2 = trgt2
+                if new_d1 < new_d2:
+                    return o1, new_d1, new_ox1, new_oy1
+                else:
+                    return o2, new_d2, new_ox2, new_oy2
     return obj, d_min, ox_min, oy_min
 
 class SimpleStackLogic(object):
