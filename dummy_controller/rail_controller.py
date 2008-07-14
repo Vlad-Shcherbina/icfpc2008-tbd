@@ -80,9 +80,10 @@ class RailController(object):
 		smp = serverMovementPredictor
 		
 		
-		lookAhead = 0.05
+		lookAhead = 0.1
 		
-		self.beacons = beacons(self.rover,self.trace,smp.latency+lookAhead)
+		actualRover = smp.predict(smp.latency)[-1]
+		self.beacons = beacons(actualRover,self.trace,smp.latency+lookAhead)
 		
 		bestCmds = None
 		bestCost = 1e100
@@ -96,7 +97,7 @@ class RailController(object):
 				candidates.append(cmds)
 
 		for cmds in candidates:
-			pos = predict(self.rover,cmds,lookAhead+smp.latency)[-1]
+			pos = predict(actualRover,cmds,lookAhead+smp.latency)[-1]
 			cost = min(map(pos.penalty,self.beacons))
 			if cost<bestCost:
 				bestPos = pos
@@ -118,18 +119,10 @@ class RailController(object):
 	def draw(self):
 		from visualizer import *	
 		glBegin(GL_LINES)
-		glColor3f(0.4,0.4,0)
+		glColor3f(1,1,0)
 		for p in self.trace:
 			glVertex2f(p.x,p.y)
 		glEnd()
-		
-#		glBegin(GL_LINES)
-#		glColor3f(1,0,0)
-#		for i in range(200):
-#			t = self.trace[0].localT+i*0.11
-#			p = lerpTrace(t,self.trace)
-#			glVertex2f(p.x,p.y)
-#		glEnd()
 			
 		glBegin(GL_LINES)
 		glColor3f(0,1,0)
