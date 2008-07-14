@@ -113,9 +113,14 @@ class Cerebellum(object):
 							     x-self.x))
 		dDir = subtractAngles(desiredDir, self.dir)
 		
+		if self.prevDir is not None:
+			#second-order prediction
+			estDir = subtractAngles(self.dir, self.prevDir) * 1.0
+			dDir = subtractAngles(dDir, estDir)
+			
 		turnThreshold = self.initialData.maxTurn * 0.05 
 		hardTurnThreshold = self.initialData.maxHardTurn * 0.15 
-
+	
 		if dDir > hardTurnThreshold:
 			self.turnControl = 2
 		elif dDir> turnThreshold:
@@ -126,6 +131,8 @@ class Cerebellum(object):
 			self.turnControl = -1
 		else:
 			self.turnControl = -2
+			
+			
 
 	def _moveTo(self,x,y):
 		self._rotateTo(x,y)
@@ -196,6 +203,8 @@ class Cerebellum(object):
 		print "*"*20, "\nNew Run!\n", "*"*20
 		self.commands = []
 		self._control = (0, 0)
+		self.prevDir = None
+		self.dir = None
 
 
 		               
@@ -209,6 +218,7 @@ class Cerebellum(object):
 		
 		self.x = tele.x
 		self.y = tele.y
+		self.prevDir = self.dir
 		self.dir = tele.dir
 		
 		# control
