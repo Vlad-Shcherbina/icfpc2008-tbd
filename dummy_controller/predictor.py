@@ -4,8 +4,10 @@ import time
 
 from misc import *
 
-
 DEFAULT_DT = 0.15
+
+# TODO: replace it with estimate
+DEFAULT_LATENCY = 0.1 
 
 class PredictionDrawer:
 	
@@ -173,18 +175,19 @@ class ServerMovementPredictor(object):
 	
 	def commandSent(self,controlTuple):
 		t = time.clock()
+		#clean up sent commands
 		while len(self.controls)>0 and self.controls[0].time < t-self.latency:
 			self.controls.pop(0)
 			
 		self.controls.append(ControlRecord(controlTuple))
-		print self.controls
+		#print self.controls
 
 	def processTelemetry(self,tele):
 		self.rover = RoverState(tele,self.rover)
 
 	def getLatency(self):
 		# TODO - add estimation here!!!!!!
-		return 0.05
+		return DEFAULT_LATENCY
 	latency = property(getLatency)
 	
 	def predict(self,interval):
@@ -195,7 +198,7 @@ class ServerMovementPredictor(object):
 			commands.append(cmd)
 		return predict(self.rover,commands,interval)
         
-serverMovementPredictor = ServerMovementPredictor()        
+serverMovementPredictor = ServerMovementPredictor()
         
 
 class RoverState(object):
@@ -241,7 +244,7 @@ class RoverState(object):
     def penalty(self,another):
         return \
             (sqrt((self.x-another.x)**2+abs(self.y-another.y)**2)/\
-                physicalValues.typicalSpeed)**2 +\
+                physicalValues.typicalSpeed)**3 +\
             abs(self.speed-another.speed)/\
                 physicalValues.typicalAccel+\
             abs(subtractAngles(self.dir,another.dir))/\
@@ -276,8 +279,8 @@ def roverSimulationStep(rover,dt,commands=None,firstCommand=0):
     dragDelta = max(min(dragDelta,maxDragDelta),-maxDragDelta)
     rover.speed += dragDelta
     rover.speed = max(rover.speed,0)
-        
-    #rover.speed = min(rover.speed,phys.maxSpeed)
+    rover.speed = min(rover.speed,phys.maxSpeed)
+    
     desiredRotSpeed = \
         [-phys.hardTurn,-phys.turn,0,phys.turn,phys.hardTurn] \
         [rover.turnControl+2]

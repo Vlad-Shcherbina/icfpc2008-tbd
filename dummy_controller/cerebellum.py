@@ -154,9 +154,10 @@ class Cerebellum(object):
 			time.sleep(0.002)
 			
 		while True:
-			for h in self.handlers:
-				if hasattr(h,"idle"):
-					h.idle()
+			if self.runInProgress:
+				for h in self.handlers:
+					if hasattr(h,"idle"):
+						h.idle()
 			running = self.connection.state == ConState_Running
 			
 			while self.connection.hasMessage():

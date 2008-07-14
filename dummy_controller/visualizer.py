@@ -47,7 +47,8 @@ def martian(martian):
 	glPopMatrix()
 
 class Visualizer(Thread):
-	def __init__(self, cerebellum, staticMap, keyHandler = None):
+	def __init__(self, cerebellum, staticMap, 
+				 keyHandler = None, mouseHandler = None):
 		Thread.__init__(self)
 		self.terminate = False
 		self.drawers = []
@@ -59,6 +60,8 @@ class Visualizer(Thread):
 		self.registerDrawer(staticMap.drawer)
 		
 		self.keyHandler = keyHandler
+		
+		self.mouseHandler = mouseHandler
 		
 		
 	def registerDrawer(self,drawer):
@@ -76,8 +79,21 @@ class Visualizer(Thread):
 		glutIdleFunc(self._idle)
 		if (self.keyHandler):
 			glutKeyboardFunc(self.keyHandler)
+		
+		glutMouseFunc(self._mouseHandler)
 
 		glutMainLoop()
+
+	def _mouseHandler(self,button,state,x,y):
+		if not self.cerebellum.runInProgress or \
+			not hasattr(self,"tele"):
+			return
+		if state != GLUT_DOWN:
+			return
+		x = (float(x)/800-0.5)*self.initData.dx
+		y = ((800-float(y))/800-0.5)*self.initData.dy
+		if self.mouseHandler is not None:
+			self.mouseHandler(button,x,y)
 		
 	def _idle(self):
 		# because it is not a message handler
@@ -135,9 +151,8 @@ class Visualizer(Thread):
 					circle(x,y,0.1,5)
 
 	def display(self):
-		if not hasattr(self,"initData") or\
-			not hasattr(self,"tele") or\
-			not self.cerebellum.runInProgress: 
+		if not self.cerebellum.runInProgress or \
+			not hasattr(self,"tele"):
 			return
 
 		glMatrixMode(GL_PROJECTION)
