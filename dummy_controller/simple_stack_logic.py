@@ -34,7 +34,7 @@ def _getObjects(node, min_x, min_y, max_x, max_y):
                     return objects
             return node.calc_all_objects()
     else:
-        return None
+        return []
 
 def getObjects(node, x1, y1, x2, y2):
     """selects smallest subnode of a static map tree containing both points and returns its objects.
