@@ -57,30 +57,32 @@ def moveTo(rover,targetX,targetY,targetRadius=5,dt=None):
 	trace = []
 	n = 0
 	while (rover.x-targetX)**2+(rover.y-targetY)**2>targetRadius**2 and n<200:
-		command = ControlRecord((0,0),rover.localT)
+		command = ControlRecord((0,0),
+							    rover.localT)
 
 		desiredDir=degrees(atan2(targetY-rover.y,
 							     targetX-rover.x))
 		dDir = subtractAngles(desiredDir, rover.dir)
 
-		if dDir>15:
-			command.turnControl = 2
+		if dDir>30:
+			command.turnControl = randrange(2)+1
 		elif dDir>3:
 			command.turnControl = 1
 		elif dDir>-3:
 			command.turnControl = 0
-		elif dDir>-15:
+		elif dDir>-30:
 			command.turnControl = -1
 		else:
-			command.turnControl = -2		
+			command.turnControl = -randrange(2)-1		
 
 		dirX = cos(radians(rover.dir))
 		dirY = sin(radians(rover.dir))
 		dot = dirX*(targetX-rover.x)+dirY*(targetY-rover.y)
 		if dot>0:
-			command.forwardControl = 1
+			command.forwardControl = randrange(2)
 		else:
 			command.forwardControl = 0
+
 			
 		commands.append(command)
 		curCommand = roverSimulationStep(rover, dt, commands, curCommand)
@@ -114,13 +116,15 @@ class RailController(object):
 		if self.beginning:
 			self.beginning = False
 		
+		#return
+	
 		if len(self.trace)==0:
 			return
 		
 		smp = serverMovementPredictor
 		
 		
-		lookAhead = 0.5
+		lookAhead = 0.1
 		
 		actualRover = smp.predict(smp.latency)[-1]
 		self.beacons = beacons(actualRover,self.trace,smp.latency+lookAhead)
@@ -137,13 +141,13 @@ class RailController(object):
 					ControlRecord((fc,tc),tele.localTimeStamp+smp.latency),
 					]
 				candidates.append(cmds)
-		for fc in range(-1,2):
-			for tc in range(-2,3):
-				cmds = [
-					ControlRecord((fc,tc),tele.localTimeStamp+smp.latency),
-					ControlRecord((0,0),tele.localTimeStamp+smp.latency+0.05)
-					]
-				candidates.append(cmds)
+#		for fc in range(-1,2):
+#			for tc in range(-2,3):
+#				cmds = [
+#					ControlRecord((fc,tc),tele.localTimeStamp+smp.latency),
+#					ControlRecord((0,0),tele.localTimeStamp+smp.latency+0.05)
+#					]
+#				candidates.append(cmds)
 
 		for cmds in candidates:
 			tr = predict(actualRover,cmds,lookAhead+smp.latency,dt=0.03)

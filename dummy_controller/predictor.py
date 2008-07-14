@@ -7,9 +7,9 @@ from misc import *
 DEFAULT_DT = 0.15
 
 # TODO: replace it with estimate
-DEFAULT_LATENCY = 0.1 
+DEFAULT_LATENCY = 0.05
 
-class PredictionDrawer:
+class PredictionDrawer(object):
 	
 	def __init__(self):
 		pass
@@ -23,7 +23,7 @@ class PredictionDrawer:
 	def __call__(self):
 		from visualizer import *
 		trace = predict(self.rover,
-						commands=[], 
+						commands=[],
 						interval=5)
 		glBegin(GL_POINTS)
 		glColor3f(1,1,0)
