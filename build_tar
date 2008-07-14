@@ -1,1 +1,18 @@
+# 
+# numpy-1.1.0.tar.gz
+# psyco-1.6-src.tar.gz
+#   Should be in ./2008 folder!
+
+#
+# ALSO! Make sure your TAR has a valid -x attributes for the bin/install and bin/run !!!
+#
+
+rm -rf icfp08/src/numpy-1.1.0
+rm -rf icfp08/src/psyco-1.6
+rm -rf icfp08/src/dummy_controller
+
+cp -R ./dummy_controller icfp08/src/
+tar -zxf numpy-1.1.0.tar.gz -C icfp08/src/
+tar -zxf psyco-1.6-src.tar.gz -C icfp08/src/
+
 tar -czf icfp08.tgz icfp08
