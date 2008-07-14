@@ -13,7 +13,7 @@ def processTelemetry(message):
 def processEvent(message):
 	pass
 
-def commandSent(command):
+def commandSent(control):
 	pass 
 
 

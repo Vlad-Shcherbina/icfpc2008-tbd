@@ -41,6 +41,9 @@ def reverse(angle):
 def lerp(a, b, q):
     return a * (1 - q) + b * q
 
+def clamp(value, minValue, maxValue):
+	return max(min(value, maxValue), minValue)
+
 class FOFilter(object):
     def __init__(self, quotient, value = 0.0):
         self.quotient = quotient

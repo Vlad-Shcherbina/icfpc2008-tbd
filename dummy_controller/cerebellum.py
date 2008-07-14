@@ -21,18 +21,13 @@ class Cerebellum(object):
 	It also dispatches information to higher layers.
 	"""
 	def __init__(self,connection):
-		self.connection = connection
+		self._connection = connection
 		self.currentRun = 0
 		self.handlers = []
 		self.command = None
 		self.runInProgress = False
 		
-		self._turnControl = 0
-		self._forwardControl = 0
-		
-#		self.x = 0.0
-#		self.y = 0.0
-#		self.dir = 0.0
+		self._control = (0, 0) # acceleration, rotation
 		
 
 	def registerMessageHandler(self,handler):
@@ -50,48 +45,52 @@ class Cerebellum(object):
 		self.handlers.append(handler)
 
 	
-	def rawcmd(self, command):
-		self.connection.sendCommand(command)
-		self.dispatchToHandlers("commandSent",
-							    (self._forwardControl,self._turnControl))
+	
 	
 	# forwardControl 
+	def clampControl(self, control):
+		return (clamp(control[0], -1, 1), clamp(control[1], -2, 2))
 	
-	def setForwardControl(self, v):
+	def setControl(self, control):
 		if not self.runInProgress:
 			return
-		v = max(min(v,1),-1)
-		while self._forwardControl < v:
-			self._forwardControl += 1
-			self.rawcmd("a;")
-		while self._forwardControl > v:
-			self._forwardControl -= 1
-			self.rawcmd("b;")
+		
+		control = self.clampControl(control)
+		cmd = "" 
+		
+		while (self._control != control):
+			ds = clamp(control[0] - self._control[0], -1, 1)
+			dr = clamp(control[1] - self._control[1], -1, 1)
+			cmd += ["b", "", "a"][ds + 1] + ["r", "", "l"][dr + 1] + ";"
+			self._control = (self._control[0] + ds, self._control[1] + dr)
+		
+		if cmd:
+			self._connection.sendCommand(cmd)
+			statistics.commandSent(self._control)
+			self.dispatchToHandlers("commandSent", self._control)
+		else:
+			self._connection.sendCommand(";")
+		   
+			
+	def setForwardControl(self, v):
+		self.setControl((v, self._control[1]))
 		
 	def getForwardControl(self):
-		return self._forwardControl
+		return self._control[0]
 	
 	forwardControl = property(getForwardControl, setForwardControl)
 
 	# turnControl
 	def setTurnControl(self, t):
-		if not self.runInProgress:
-			return
-		t = max(min(t,2),-2)
-		while self._turnControl < t:
-			self._turnControl += 1
-			self.rawcmd("l;")
-		while self._turnControl > t:
-			self._turnControl -= 1
-			self.rawcmd("r;")
+		self.setControl((self._control[0], t))
 		
 	def getTurnControl(self):
-		return self._turnControl
+		return self._control[1]
 	
 	turnControl = property(getTurnControl,setTurnControl)
 
 	# hi-level cmd wrapper
-	def cmd(self,command):
+	def cmd(self, command):
 		for c in command:
 			if c=="a":
 				self.forwardControl += 1
@@ -130,26 +129,24 @@ class Cerebellum(object):
 		
 		if dot>0:
 			self.forwardControl = 1
-#			self.forwardControl = choice([1]*8+[0]+[-1])
 		else:
 			self.forwardControl = 0
-#			self.forwardControl = choice([0]*8+[1]+[-1])
 	
 
 #########################
 # mainLoop
 
 	def mainLoop(self):
-		self.connection.start()
+		self._connection.start()
 		# to allow connection to startup
 		t = time.clock()
 		
 		sleepTime = 0
 		
-		while self.connection.state == ConState_Initializing:
+		while self._connection.state == ConState_Initializing:
 			if (time.clock() - t > 20):
-				self.connection.close()
-				self.connection.join()
+				self._connection.close()
+				self._connection.join()
 				return
 			time.sleep(0.002)
 			
@@ -158,10 +155,10 @@ class Cerebellum(object):
 				for h in self.handlers:
 					if hasattr(h,"idle"):
 						h.idle()
-			running = self.connection.state == ConState_Running
+			running = self._connection.state == ConState_Running
 			
-			while self.connection.hasMessage():
-				m = self.connection.popMessage()
+			while self._connection.hasMessage():
+				m = self._connection.popMessage()
 				self.processMessage(m)
 			else:
 				time.sleep(0.001)
@@ -171,7 +168,7 @@ class Cerebellum(object):
 				break
 			
 		print "run time: %3.2f sleep time: %3.2f" % ((time.clock() - t), sleepTime)
-		self.connection.join()
+		self._connection.join()
 
 
 #########################
@@ -181,8 +178,7 @@ class Cerebellum(object):
 		"""message handler"""
 		print "*"*20, "\nNew Run!\n", "*"*20
 		self.commands = []
-		self._forwardControl = 0
-		self._turnControl = 0
+		self._control = (0, 0)
 
 
 		               
@@ -206,7 +202,7 @@ class Cerebellum(object):
 				self._moveTo(self.command[1],self.command[2])
 		else:
 			# keepalive
-			self.connection.sendCommand(";")
+			self._connection.sendCommand(";")
 			
 		
 
