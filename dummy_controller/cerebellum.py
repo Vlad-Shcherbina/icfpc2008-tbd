@@ -129,9 +129,11 @@ class Cerebellum(object):
 		dot = dirX*(x-self.x)+dirY*(y-self.y)
 		
 		if dot>0:
-			self.forwardControl = choice([1]*8+[0]+[-1])
+			self.forwardControl = 1
+#			self.forwardControl = choice([1]*8+[0]+[-1])
 		else:
-			self.forwardControl = choice([0]*8+[1]+[-1])
+			self.forwardControl = 0
+#			self.forwardControl = choice([0]*8+[1]+[-1])
 	
 
 #########################

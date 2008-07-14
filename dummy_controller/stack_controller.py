@@ -9,23 +9,27 @@ from controller import connection,cerebellum,visualize,mainLoop
 
 ##############
 
-cerebellum.registerMessageHandler(TestHandler())
-
-staticMap = StaticMap()
-cerebellum.registerMessageHandler(staticMap)
-
-logic = SimpleStackLogic(cerebellum,staticMap)
-cerebellum.registerMessageHandler(logic)
-
-if visualize:
-	from visualizer import Visualizer
-	import simple_stack_visualizer
-	vis = Visualizer(cerebellum, staticMap)
-	vis.registerDrawer(simple_stack_visualizer.createDrawer(logic))
-	vis.start()
-
-mainLoop()
-
-if visualize:
-    vis.terminate = True
-    vis.join()
+def main():
+	cerebellum.registerMessageHandler(TestHandler())
+	
+	staticMap = StaticMap()
+	cerebellum.registerMessageHandler(staticMap)
+	
+	logic = SimpleStackLogic(cerebellum,staticMap)
+	cerebellum.registerMessageHandler(logic)
+	
+	if visualize:
+		from visualizer import Visualizer
+		import simple_stack_visualizer
+		vis = Visualizer(cerebellum, staticMap)
+		vis.registerDrawer(simple_stack_visualizer.createDrawer(logic))
+		vis.start()
+	
+	mainLoop()
+	
+	if visualize:
+	    vis.terminate = True
+	    vis.join()
+	    
+if __name__ == "__main__":
+    main()

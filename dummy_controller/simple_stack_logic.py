@@ -34,7 +34,7 @@ def _getObjects(node, min_x, min_y, max_x, max_y):
                     return objects
             return node.calc_all_objects()
     else:
-        return []
+        return None 
 
 def getObjects(node, x1, y1, x2, y2):
     """selects smallest subnode of a static map tree containing both points and returns its objects.
@@ -95,7 +95,7 @@ def calcCollision(vx, vy, tx, ty, objects):
     ox_min = None # x of the recommended avoidance point
     oy_min = None # y of the recommended avoidance point
     for o in objects:
-        rslt = calc_hit(vx, vy, tx, ty, o.x, o.y, o.radius, 0.5, 0.1)
+        rslt = calc_hit(vx, vy, tx, ty, o.x, o.y, o.radius, 0.5, 0.5)
         if rslt is not None:
             d, ox, oy = rslt
             if (d_min is None) or (d < d_min):
@@ -140,6 +140,7 @@ class SimpleStackLogic(object):
             staticObjects = self.mymap.staticObjects
         else:
             staticObjects = getObjects(tree, x1, y1, x2, y2)
+            if staticObjects is None: staticObjects = self.mymap.staticObjects
         obj, d_min, ox_min, oy_min = calcCollision(x1, y1, x2, y2, staticObjects)
         if d_min is not None:
             # we found an obstacle to avoid
