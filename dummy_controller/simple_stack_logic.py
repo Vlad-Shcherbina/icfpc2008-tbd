@@ -158,6 +158,7 @@ class SimpleStackLogic(object):
     def __init__(self, cere, mymap):
         self.cere = cere
         self.mymap = mymap
+        self.currObjectCount = 0
         self.resetTargets()
         
     def resetTargets(self):
@@ -182,6 +183,10 @@ class SimpleStackLogic(object):
         if  tele.moreMessagesWaiting:
             print 'stack logic: skipping frame'
             return
+        objCount = len(self.mymap.staticObjects)
+        if (objCount != self.currObjectCount):
+            self.resetTargets()
+            self.currObjectCount = objCount
         curr_o, x2, y2 = self.targets[0]
         d_min = None  # distance to the nearest collision 
         obj = None    # collision-causing object 

@@ -1,6 +1,6 @@
 from protocol import *
 
-NODE_MAX_OBJECTS = 5
+NODE_MAX_OBJECTS = 3#5
 
 clearance={"b":0.5,"c":0.1}
 # clearance for boulder is 0.5, because if we touch it, we bounce
@@ -146,6 +146,7 @@ class StaticMap(object):
 		"""message handler"""
 		for o in tele.objects:
 			if isinstance(o,StaticObject):
+				o.radius += 1
 				if not self.objectsHash.has_key(o):
 					self.staticObjects.append(o)
 					self.objectsHash[o] = True
