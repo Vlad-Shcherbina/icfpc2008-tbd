@@ -66,7 +66,7 @@ def calc_hit(x1, y1, x2, y2, px, py, R, r, g):
     assert cosalpha <= 1.01
     assert cosalpha >= -1.01
     l = c * cosalpha
-    if l > b: 
+    if l > b and a2 < R**2: 
         return None # does not hit
     sinalpha2 = 1.0 - cosalpha**2
     if sinalpha2 < 0: sinalpha2 = 0
@@ -79,14 +79,38 @@ def calc_hit(x1, y1, x2, y2, px, py, R, r, g):
     hx = x1 + ((x2 - x1) * l) / b;
     hy = y1 + ((y2 - y1) * l) / b;
     if h == 0:
-        ox = px + ((y2 - y1) * (R + g + r)) / b;
-        oy = py + ((x1 - x2) * (R + g + r)) / b;
-        d = l - sqrt(R**2 - h**2)
+        dx = ((y2 - y1) * (R + g + r)) / b
+        dy = ((x1 - x2) * (R + g + r)) / b
+        ox1 = px + dx
+        oy1 = py + dy
+        ox2 = px - dx
+        oy2 = py - dy
     else:
-        ox = px + ((hx - px) * (R + g + r)) / h;
-        oy = py + ((hy - py) * (R + g + r)) / h;
-        d = l - sqrt(R**2 - h**2)
-    return (d, ox, oy)
+        dx = ((hx - px) * (R + g + r)) / h
+        dy = ((hy - py) * (R + g + r)) / h
+        ox1 = px + dx
+        oy1 = py + dy
+        ox2 = px - dx
+        oy2 = py - dy
+    d = l - sqrt(R**2 - h**2)
+    return (d, ox1, oy1, ox2, oy2) # distance till collision, preferred avoidance point, alternative avoidance point
+
+def calcTargetsChainAvoidance(vx, vy, ox, oy, d, prev, objects):
+    """ recursively checks if the given avoidance point hits other objects 
+    and calculates the coords to avoid it by going to the same side as the given ox, oy proposes
+    if no collision is expected, returns None """
+    for o in objects:
+        if ((ox - o.x)**2 + (oy - o.y)**2) <= o.radius**2:
+            rslt = calc_hit(vx, vy, ox, oy, o.x, o.y, o.radius, 0.5, 0.5)
+            if rslt is not None:
+                new_d, new_ox, new_oy, new_alt_ox, new_alt_oy = rslt
+                if (prev.x - new_ox)**2 + (prev.y - new_oy)**2 <= prev.radius**2:
+                    new_ox = new_alt_ox
+                    new_oy = new_alt_oy
+                new_rslt = calcTargetsChainAvoidance(vx, by, new_ox, new_oy, o, objects)
+                if new_rslt is None: return (o, new_d, new_ox, new_oy)
+                else: return new_rslt
+    return None
 
 def calcCollision(vx, vy, tx, ty, objects):
     """vehicle x, vehicle y, target x, target y, list of objects"""
@@ -94,15 +118,40 @@ def calcCollision(vx, vy, tx, ty, objects):
     obj = None    # collision-causing object 
     ox_min = None # x of the recommended avoidance point
     oy_min = None # y of the recommended avoidance point
+    alt_ox_min = None
+    alt_oy_min = None
     for o in objects:
         rslt = calc_hit(vx, vy, tx, ty, o.x, o.y, o.radius, 0.5, 0.5)
         if rslt is not None:
-            d, ox, oy = rslt
+            d, ox, oy, alt_ox, alt_oy = rslt
             if (d_min is None) or (d < d_min):
                 d_min = d
                 ox_min = ox
                 oy_min = oy
+                alt_ox_min = alt_ox
+                alt_oy_min = alt_oy
                 obj = o
+    # todo: check that we did not hit more objects by this waypoint
+    if obj is not None:
+        o1 = None
+        o2 = None
+        for o in objects:
+            if o1 is None and((ox_min - o.x)**2 + (oy_min - o.y)**2) <= o.radius**2:
+                o1 = o
+            elif o2 is None and((alt_ox_min - o.x)**2 + (alt_oy_min - o.y)**2) <= o.radius**2:
+                o2 = o
+            # for ease, we only suppose there is one colliding object only, otherwise we die 
+        if o1 is None:
+            return obj, d_min, ox_min, oy_min
+        elif o2 is None:
+            return obj, d_min, alt_ox_min, alt_oy_min
+        else: # fuck...
+            o1, new_d1, new_ox1, new_oy1 = calcTargetsChainAvoidance(vx, vy, ox_min, oy_min, d, o1, objects)
+            o2, new_d2, new_ox2, new_oy2 = calcTargetsChainAvoidance(vx, vy, alt_ox_min, alt_oy_min, d, o2, objects)
+            if new_d1 < new_d2:
+                return o1, new_d1, new_ox1, new_oy1
+            else:
+                return o2, new_d2, new_ox2, new_oy2
     return obj, d_min, ox_min, oy_min
 
 class SimpleStackLogic(object):
@@ -130,6 +179,13 @@ class SimpleStackLogic(object):
         self.checkReached(x1, y1)
         if len(self.targets) == 0: 
             return
+        try:
+            if  tele.moreMessagesWaiting:
+                print 'stack logic: skipping frame'
+                return
+        except AttributeError,e:
+            print "!!! --- " + str(tele)
+            print e
         curr_o, x2, y2 = self.targets[0]
         d_min = None  # distance to the nearest collision 
         obj = None    # collision-causing object 
@@ -146,16 +202,25 @@ class SimpleStackLogic(object):
             # we found an obstacle to avoid
             self.addTarget(obj, ox_min, oy_min)
         else: # TODO: estimate if our current target is sane
-            if len(self.targets) > 1:
-                next_object, next_x, next_y = self.targets[1]
-                if tree is None:
-                    staticObjects = self.mymap.staticObjects
-                else:
-                    staticObjects = getObjects(tree, x1, y1, next_x, next_y)
-                n_coll_obj, n_d_min, n_ox_min, n_oy_min = calcCollision(x1, y1, next_x, next_y, staticObjects)
-                if curr_o != n_coll_obj: self.dropNearestTarget()
+            self.dropRedunantTargets(x1, y1)
         o, x2, y2 = self.targets[0]
         self.cere.command = ("moveTo",x2,y2)
+        
+    def dropRedunantTargets(self, x1, y1):
+        if len(self.targets) > 1:
+            curr_o, x2, y2 = self.targets[0]
+            tree = self.mymap.tree
+            next_object, next_x, next_y = self.targets[1]
+            if tree is None:
+                staticObjects = self.mymap.staticObjects
+            else:
+                staticObjects = getObjects(tree, x1, y1, next_x, next_y)
+            n_coll_obj, n_d_min, n_ox_min, n_oy_min = calcCollision(x1, y1, next_x, next_y, staticObjects)
+            if curr_o != n_coll_obj:
+                print 'DROP target'
+                self.dropNearestTarget()
+                self.dropRedunantTargets(x1, y1)
+        
         
         
     def processEvent(self, event):
