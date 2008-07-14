@@ -25,37 +25,45 @@ accel = 2
 brake = 2
 drag = 0.1
 
-rotAccel = 150
+rotAccel = 50
 maxTurn = 50
 maxHardTurn = 100
 
-mapSize = 30
+mapSize = 50
+timeLimit = 30
 
-conn.send("I %s %s 999.9 0.5 3 %s %s %s ;" %
-			(mapSize,mapSize,math.sqrt(accel/drag),maxTurn,maxHardTurn) )
+conn.send("I %s %s %s 0.5 3 %s %s %s ;" %
+			(mapSize,mapSize,timeLimit*1000,
+			 math.sqrt(accel/drag),maxTurn,maxHardTurn) )
 
 
 objs="".join([
 	"b %s %s %s "%((random()-0.5)*mapSize,(random()-0.5)*mapSize,random()*5)
-	for i in range(20)])
+	for i in range(00)])
 
 
-x = 5
+x = -20
 y = 6
 v = 0
-angle = 30
+angle = 00
 data = ""
 acc = 0
 rot = 0
 rotSpeed = 0
-prevTime = time.clock()
 for i in range(1):
 	t = 0
 	time.sleep(0.1)
-	for i in range(1000):
+	 
+	startTime = time.clock()
+	prevTime = time.clock()
+	while time.clock()<startTime+timeLimit:
+		time.sleep(0.01)
+		dt = time.clock()-prevTime
+		prevTime += dt
+		
 		try:
 			data += conn.recv(1024)
-			time.sleep(0.001)
+			time.sleep(0.01)
 		except socket.timeout:
 			pass
 		except socket.error,e:
@@ -83,15 +91,11 @@ for i in range(1):
 		print ctl
 		conn.send(
 			"T %s %s %s %s %s %s "%(t*1000,ctl,x,y,angle,v) +
-			"b -4.000 7.000 1.000 " +
-			"b -1.000 5.000 1.000 " +
 			objs +
-			"m -2.000 8.000 90.0 9.100 ;")
+			";")
 
 		objs = ""
-		time.sleep(0.01+random()*0.005)
-		dt = time.clock()-prevTime
-		prevTime += dt
+
 		t += dt
 		x += math.cos(math.radians(angle))*v*dt
 		y += math.sin(math.radians(angle))*v*dt

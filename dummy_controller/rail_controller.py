@@ -23,24 +23,28 @@ def keyboardHandler(key, x, y):
 		keyMapping[key]()
 
 
-physicalValues = PhysicalValues()
-cerebellum.registerMessageHandler(physicalValues)
-
 class RailController(object):
 	def __init__(self):
 		pass
+	
 	def runStart(self,currentRun):
 		"""message handler"""
 		self.beginning = True
-		self.timeForMessage = 0
+	
 	def processTelemetry(self,tele):
 		"""message handler"""
 		if self.beginning:
 			rover = RoverState(tele)
-			commands = [(rover.t,"a"),(rover.t+4,"r")]
-			self.trace = predict(physicalValues, rover, 
-                        dt=0.1, interval=10, commands=commands)
+			commands = []
+			self.trace = predict(
+				rover,
+				commands=commands,
+				interval=10,dt=0.15)
 			self.beginning = False
+			
+	def commandSent(self,controlState):
+		print controlState
+	
 	def draw(self):
 		from visualizer import *	
 		glBegin(GL_POINTS)
@@ -48,12 +52,7 @@ class RailController(object):
 		for p in self.trace:
 			glVertex3f(p.x,p.y,1)
 		glEnd()
-	def idle(self):
-		"""message handler"""
-		if cerebellum.runInProgress:
-			if self.timeForMessage<time.clock():
-				cerebellum.cmd(choice(["a","b","l","r"]))
-				self.timeForMessage = time.clock()+random()*0.25
+
 	def runFinish(self,currentRun):
 		"""message handler"""
 		print "rail: run finish"
@@ -62,12 +61,14 @@ class RailController(object):
 railController = RailController()
 cerebellum.registerMessageHandler(railController)		
 
+pd = PredictionDrawer()
+cerebellum.registerMessageHandler(pd)
+
 if visualize:
 	from visualizer import *
 	vis = Visualizer(cerebellum, staticMap, keyboardHandler)
-#	vis = Visualizer(cerebellum, staticMap)
 	
-	vis.registerDrawer(PredictorDrawer(cerebellum, physicalValues))
+	vis.registerDrawer(pd)
 	
 	vis.registerDrawer(railController.draw)
 	

@@ -20,14 +20,9 @@ def keyboardHandler(key, x, y):
 		keyMapping[key]()
 
 
-physicalValues = PhysicalValues()
-cerebellum.registerMessageHandler(physicalValues)
-
 if visualize:
 	from visualizer import *
 	vis = Visualizer(cerebellum, staticMap, keyboardHandler)
-	
-	vis.registerDrawer(PredictorDrawer(cerebellum, physicalValues))
 	
 	vis.start()
 

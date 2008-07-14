@@ -1,21 +1,28 @@
-from misc import *
 from math import *
 from copy import copy
+import time
+
+from misc import *
 
 
-class PredictorDrawer:
+DEFAULT_DT = 0.15
+
+class PredictionDrawer:
 	
-	def __init__(self, cerebellum, physicalValues):
-		self.cerebellum = cerebellum
-		self.physicalValues = physicalValues
+	def __init__(self):
+		pass
+
+	def runStart(self,tele):
+		self.rover = None
+
+	def processTelemetry(self,tele):
+		self.rover = RoverState(tele,self.rover)
 
 	def __call__(self):
 		from visualizer import *
-		if not self.cerebellum.teles:
-			return		
-		rover = RoverState(self.cerebellum.teles[-1])
-		trace = predict(self.physicalValues, rover, 
-                        dt=0.1, interval=5, commands=[])
+		trace = predict(self.rover,
+						commands=[], 
+						interval=5)
 		glBegin(GL_POINTS)
 		glColor3f(1,1,0)
 		for p in trace:
@@ -56,13 +63,15 @@ class PhysicalValues(object):
         
     def processTelemetry(self,tele):
         """message handler"""
-        self.hist.append(RoverState(tele))
+        if len(self.hist)>0:
+            state = RoverState(tele,self.hist[-1])
+        else:
+        	state = RoverState(tele)
+        self.hist.append(state)
         self.hist = self.hist[-7:] # keep last seven states
         
         if len(self.hist) >= 2:
-            self.hist[-1].setRotSpeed(self.hist[-2])
-            
-            dt = self.hist[-1].t-self.hist[-2].t
+            dt = self.hist[-1].serverT-self.hist[-2].serverT
 
             forwardControl = self.hist[-2].forwardControl
 
@@ -96,7 +105,7 @@ class PhysicalValues(object):
             #if there were turn commands in recent history (say, five states)
             if any([self.hist[-2].turnControl != s.turnControl 
                    for s in self.hist[-7:-2]]):
-                dt2 = self.hist[-1].t-self.hist[-3].t
+                dt2 = self.hist[-1].serverT-self.hist[-3].serverT
                 if dt2>1e-4:
                     curRotAccel = (self.hist[-1].rotSpeed-self.hist[-2].rotSpeed)/\
                                   (0.5*dt2)
@@ -126,45 +135,102 @@ class PhysicalValues(object):
         print "  brake",self.brake
         print "  drag",self.drag
         print "  rotAccel",self.rotAccel
+
+physicalValues = PhysicalValues()
+
+
+class ControlRecord():
+	__slots__=("time", "forwardControl", "turnControl")
+	def __init__(self,controlTuple):
+		self.time = time.clock()
+		self.forwardControl,self.turnControl = controlTuple
+	def __repr__(self):
+		return "'%s%s'@%.3f"%(
+			"b-a"[self.forwardControl+1],
+			"Rr-lL"[self.turnControl+2],
+			self.time
+			)
+			
+
+class ServerMovementPredictor(object):
+	"""
+	Keeps commands that are sent but not executed by server because of latency
+	"""
+	def __init__(self):
+		self.latency = 0.1
+		
+	def runStart(self,currentRun):
+		self.controls = []
+	
+	def commandSent(self,controlTuple):
+		t = time.clock()
+		while len(self.controls)>0 and self.controls[0].time < t-self.latency:
+			self.controls.pop(0)
+			
+		self.controls.append(ControlRecord(controlTuple))
+		print self.controls
+        
+serverMovementPredictor = ServerMovementPredictor()        
         
 class RoverState(object):
     """
     Represents telemetry data, but without objects
     """
-    def __init__(self,tele):
-        self.t = tele.timeStamp
+    __slots__ = (
+        "serverT","localT",
+        "x","y","dir","speed","rotSpeed","forwardControl","turnControl")
+    
+    def __init__(self,tele=None,prevState = None):
+    	# prev state is used to determine rotSpeed
+    	if tele is None:
+    		return
+        self.serverT = tele.timeStamp # only for parameter estimation
+        self.localT = tele.localTimeStamp
         self.x = tele.x
         self.y = tele.y
         self.dir = tele.dir
         self.speed = tele.speed
         self.forwardControl = {"b":-1,"-":0,"a":1}[tele.ctl[0]]
-        self.turnControl = {"R":-2,"r":-1,"-":0,"l":1,"L":2}[tele.ctl[1]]   
-        self.rotSpeed = 0
-    def setRotSpeed(self,prevState):
-        dt = self.t-prevState.t
-        if dt>1e-4:
-            dDir = subtractAngles(self.dir,prevState.dir)
-            self.rotSpeed = dDir/dt
+        self.turnControl = {"R":-2,"r":-1,"-":0,"l":1,"L":2}[tele.ctl[1]]
+        
+        if prevState is None:
+        	self.rotSpeed = 0
         else:
-            self.rotSpeed = prevState.rotSpeed
+            dt = self.serverT-prevState.serverT
+            if dt>1e-4:
+                dDir = subtractAngles(self.dir,prevState.dir)
+                self.rotSpeed = dDir/dt
+            else:
+                self.rotSpeed = prevState.rotSpeed
+    
+#    def __copy__(self):
+#    	# because of bug (as i think) in copy behaviour
+#    	res = RoverState()
+#    	for s in RoverState.__slots__:
+#    		setattr(res,s,getattr(self,s))
+#    	return res
 
-def roverSimulationStep(phys,rover,dt,commands,firstCommand=0):
-    #update controls
-    while firstCommand<len(commands) and commands[firstCommand][0]<rover.t:
-        for c in commands[firstCommand][1]:
-            if c=="a":
-                if rover.forwardControl<1:
-                    rover.forwardControl += 1
-            elif c=="b":
-                if rover.forwardControl>-1:
-                    rover.forwardControl -= 1
-            elif c=="l":
-                if rover.turnControl<2:
-                    rover.turnControl += 1
-            elif c=="r":
-                if rover.turnControl>-2:
-                    rover.turnControl -= 1
-        firstCommand += 1
+
+def roverSimulationStep(rover,dt,commands=None,firstCommand=0):
+    phys = physicalValues
+    
+    if commands is not None:
+        #update controls
+        while firstCommand<len(commands) and \
+        	  commands[firstCommand].time < rover.localT:
+            rover.forwardControl = commands.firstCommand.forwardControl
+            rover.turnControl = commands.firstCommand.turnControl
+            firstCommand += 1
+            
+        while firstCommand<len(commands) and \
+              commands[firstCommand].time < rover.localT+dt:
+            partialDt = commands[firstCommand].time-rover.localT
+            roverSimulationStep(rover,partialDt) # recursion deep is 1
+            dt -= partialDt
+            rover.forwardControl = commands.firstCommand.forwardControl
+            rover.turnControl = commands.firstCommand.turnControl
+            firstCommand += 1
+            
             
     #update speed
     accel = [-phys.brake,0,phys.accel][rover.forwardControl+1]
@@ -190,26 +256,29 @@ def roverSimulationStep(phys,rover,dt,commands,firstCommand=0):
     rover.dir += dt*rover.rotSpeed
     rover.dir = subtractAngles(rover.dir,0)
 
-    rover.t += dt
+    rover.localT += dt
+    rover.serverT +=dt
     
     return firstCommand
 
-def predict(phys,roverState,dt,interval,commands):
+def predict(rover,commands,interval,dt=None):
     """
     Constructs the trace of the rover.
     
-    phys is PhysicalValues object
-    Commands is list of the form [(time,cmd),...]
+    Commands is list of control records
     
     Returns list of roverStates
     """
-    rover = roverState
-    finishTime = rover.t+interval
+    finishTime = rover.localT+interval
+    if dt is None:
+        n = ceil(interval/DEFAULT_DT)
+        dt = interval/max(n,1)
+    
     res = []
     cur = 0
-    while rover.t < finishTime:
+    while rover.localT < finishTime:
         rover = copy(rover)
-        cur=roverSimulationStep(phys,rover,dt,commands,cur)
+        cur=roverSimulationStep(rover,dt,commands,cur)
         res.append(rover)
         
     return res

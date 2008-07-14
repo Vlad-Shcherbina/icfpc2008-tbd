@@ -30,9 +30,9 @@ class Cerebellum(object):
 		self._turnControl = 0
 		self._forwardControl = 0
 		
-		self.x = 0.0
-		self.y = 0.0
-		self.dir = 0.0
+#		self.x = 0.0
+#		self.y = 0.0
+#		self.dir = 0.0
 		
 
 	def registerMessageHandler(self,handler):
@@ -45,20 +45,28 @@ class Cerebellum(object):
 			processEvent(event)
 			idle()
 			runFinish()
+			commandSent(controlStateTuple)
 		"""
 		self.handlers.append(handler)
 
 	
 	def rawcmd(self, command):
 		self.connection.sendCommand(command)
-		statistics.commandSent(command)
+		self.dispatchToHandlers("commandSent",
+							    (self._forwardControl,self._turnControl))
 	
 	# forwardControl 
 	
 	def setForwardControl(self, v):
+		if not self.runInProgress:
+			return
 		v = max(min(v,1),-1)
-		self.rawcmd("a;"*(v-self._forwardControl)+"b;"*(self._forwardControl-v))
-		self._forwardControl = v
+		while self._forwardControl < v:
+			self._forwardControl += 1
+			self.rawcmd("a;")
+		while self._forwardControl > v:
+			self._forwardControl -= 1
+			self.rawcmd("b;")
 		
 	def getForwardControl(self):
 		return self._forwardControl
@@ -67,9 +75,15 @@ class Cerebellum(object):
 
 	# turnControl
 	def setTurnControl(self, t):
+		if not self.runInProgress:
+			return
 		t = max(min(t,2),-2)
-		self.rawcmd("l;"*(t-self._turnControl)+"r;"*(self._turnControl-t))
-		self._turnControl = t
+		while self._turnControl < t:
+			self._turnControl += 1
+			self.rawcmd("l;")
+		while self._turnControl > t:
+			self._turnControl -= 1
+			self.rawcmd("r;")
 		
 	def getTurnControl(self):
 		return self._turnControl

@@ -1,5 +1,5 @@
-from numpy import *
-from numpy.linalg import *
+from numpy import zeros,array
+from numpy.linalg import det,solve,LinAlgError
 
 class MinSQ(object):
     """Class for minimal square optimization of given constraints"""
