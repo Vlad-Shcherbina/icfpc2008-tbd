@@ -6,6 +6,7 @@ from misc import *
 from static_map import StaticMap
 from simple_stack_logic import SimpleStackLogic
 from controller import connection,cerebellum,visualize,mainLoop
+from insurance import *
 
 ##############
 
@@ -17,12 +18,16 @@ def main():
 	
 	logic = SimpleStackLogic(cerebellum,staticMap)
 	cerebellum.registerMessageHandler(logic)
-	
+
+	ins = Insurance()
+	cerebellum.registerMessageHandler(ins)
+		
 	if visualize:
 		from visualizer import Visualizer
 		import simple_stack_visualizer
 		vis = Visualizer(cerebellum, staticMap)
 		vis.registerDrawer(simple_stack_visualizer.createDrawer(logic))
+		vis.registerDrawer(ins.draw)
 		vis.start()
 	
 	mainLoop()
