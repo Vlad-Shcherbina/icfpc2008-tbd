@@ -142,14 +142,14 @@ class DrunkyGoHome(object):
 	def martianAttack(self):
 		log("================ martianAttack!")		
 		if self.ifTurningLeft():
-		    self.accel()
-		    self.right(3)
+		    self.accel(2)
+		    self.right(4)
 		elif self.ifTurningRight():
-		    self.accel()
-		    self.left(3)
+		    self.accel(2)
+		    self.left(4)
 		else: # panic!
-		    self.accel(4)
-		    self.left(6)
+		    self.accel(3)
+		    self.left(3)
 
 	def processTelemetry(self, tele):
 
@@ -158,8 +158,6 @@ class DrunkyGoHome(object):
 		print "speed: %f ctl:%s" % (tele.speed, tele.ctl)		
 		self._right = 0
 		self._accel = 0
-
-
 		
 		self.objectcloud = []
 		for obj in self.tele.objects:
@@ -175,14 +173,14 @@ class DrunkyGoHome(object):
 				if (-130 < c[0] < -50):
 					self.accel()
 			if isinstance(c[3], StaticObject) and c[3].kind != 'h':
-				if (60 < c[0] < 90) and c[2] > 10:
+				if (45 < c[0] < 90) and c[2] > 10:
 					log("lllllllllll StaticObject")
 					self.left(2)
 				if (90 < c[0] < 120) and c[2] > 10:
 					log("rrrrrrrrrrr StaticObject")
 					self.right(2)
 				#crater
-				if (60 < c[0] < 120) and c[2] > 30 and c[3].kind == 'c':
+				if (60 < c[0] < 120) and c[2] > 10 and c[3].kind == 'c':
 					log("bbbbbbbbbbb Crater")
 					self.br(1)
 		
@@ -195,19 +193,18 @@ class DrunkyGoHome(object):
 			self.thinkOnHomeDirection()
 
 		
-		if self.tele.ctl[0] == 'a':
-			self._accel -= 1
-		
-		if self.tele.ctl[0] == 'b':
-			self._accel += 1
-		if self.tele.ctl[1] == 'l':
-			self._right += 1
+		#if self.tele.ctl[0] == 'a':
+		#	self._accel -= 1
+		#if self.tele.ctl[0] == 'b':
+		#	self._accel += 1
+		#if self.tele.ctl[1] == 'l':
+		#	self._right += 1
 		if self.tele.ctl[1] == 'L':
-			self._right += 2
-		if self.tele.ctl[1] == 'r':
-			self._right -= 1
+			self._right += 1
+		#if self.tele.ctl[1] == 'r':
+		#	self._right -= 1
 		if self.tele.ctl[1] == 'R':
-			self._right -= 2
+			self._right -= 1
 		
 		if (self._right > 0):
 		    self.directcmdx("r;" * abs(self._right))
