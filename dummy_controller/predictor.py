@@ -190,13 +190,16 @@ class ServerMovementPredictor(object):
 		return DEFAULT_LATENCY
 	latency = property(getLatency)
 	
-	def predict(self,interval):
+	def predict(self,interval,rover=None):
+		if rover is None:
+			rover = self.rover
 		commands = []
 		for c in self.controls:
 			cmd = copy(c)
 			cmd.time += self.latency
 			commands.append(cmd)
-		return predict(self.rover,commands,interval)
+		return predict(rover,commands,interval)
+	
         
 serverMovementPredictor = ServerMovementPredictor()
         

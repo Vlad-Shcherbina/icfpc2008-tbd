@@ -164,8 +164,8 @@ class Cerebellum(object):
 				m = self.connection.popMessage()
 				self.processMessage(m)
 			else:
-				time.sleep(0.002)
-				sleepTime += 0.002
+				time.sleep(0.001)
+				sleepTime += 0.001
 				
 			if not running:
 				break

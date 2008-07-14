@@ -56,6 +56,10 @@ def moveTo(rover,targetX,targetY,targetRadius=5,dt=None):
 	curCommand = 0
 	trace = []
 	n = 0
+	
+	rover = serverMovementPredictor.predict(serverMovementPredictor.latency,
+										    rover)[-1]
+	
 	while (rover.x-targetX)**2+(rover.y-targetY)**2>targetRadius**2 and n<200:
 		command = ControlRecord((0,0),
 							    rover.localT)
@@ -65,7 +69,7 @@ def moveTo(rover,targetX,targetY,targetRadius=5,dt=None):
 		dDir = subtractAngles(desiredDir, rover.dir)
 
 		if dDir>30:
-			command.turnControl = randrange(2)+1
+			command.turnControl = 2
 		elif dDir>3:
 			command.turnControl = 1
 		elif dDir>-3:
@@ -73,13 +77,13 @@ def moveTo(rover,targetX,targetY,targetRadius=5,dt=None):
 		elif dDir>-30:
 			command.turnControl = -1
 		else:
-			command.turnControl = -randrange(2)-1		
+			command.turnControl = -2		
 
 		dirX = cos(radians(rover.dir))
 		dirY = sin(radians(rover.dir))
 		dot = dirX*(targetX-rover.x)+dirY*(targetY-rover.y)
 		if dot>0:
-			command.forwardControl = randrange(2)
+			command.forwardControl = 1
 		else:
 			command.forwardControl = 0
 
@@ -107,6 +111,10 @@ class RailController(object):
 		self.targets = []
 		self.trace = []
 		self.bestTrace = None
+		
+	def setRail(self,trace):
+		self.trace = trace
+		self.pendingCommands = []
 	
 	def processTelemetry(self,tele):
 		"""message handler"""
@@ -141,13 +149,13 @@ class RailController(object):
 					ControlRecord((fc,tc),tele.localTimeStamp+smp.latency),
 					]
 				candidates.append(cmds)
-#		for fc in range(-1,2):
-#			for tc in range(-2,3):
-#				cmds = [
-#					ControlRecord((fc,tc),tele.localTimeStamp+smp.latency),
-#					ControlRecord((0,0),tele.localTimeStamp+smp.latency+0.05)
-#					]
-#				candidates.append(cmds)
+		for fc in range(-1,2):
+			for tc in range(-2,3):
+				cmds = [
+					ControlRecord((fc,tc),tele.localTimeStamp+smp.latency),
+					ControlRecord((0,0),tele.localTimeStamp+smp.latency+0.02)
+					]
+				#candidates.append(cmds)
 
 		for cmds in candidates:
 			tr = predict(actualRover,cmds,lookAhead+smp.latency,dt=0.03)
@@ -235,12 +243,13 @@ def mouseHandler(button,x,y):
 	
 	if glutGetModifiers() & GLUT_ACTIVE_SHIFT == 0:
 		railController.targets = [(x,y)]
-		railController.trace = moveTo(railController.rover,x,y,2)
+		railController.setRail(moveTo(railController.rover,x,y,2))
 	else:
 		railController.targets.append((x,y))
 		if len(railController.trace) == 0:
 			railController.trace = [railController.rover]
-		railController.trace += moveTo(railController.trace[-1],x,y,2)
+		railController.setRail(
+			railController.trace + moveTo(railController.trace[-1],x,y,2))
 
 
 #pd = PredictionDrawer()
