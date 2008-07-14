@@ -15,9 +15,11 @@ rem empty1min.wrld
 rem empty2s.wrld
 rem empty30s.wrld
 rem small-scatter-slowrot.wrld
+rem map_rotAccel40_500_c10_b10_r4_e50.wrld
 
-start ..\runsim.bat spiral.wrld
-@sleep 1
+start ..\runsim.bat map_empty_1500_c20_b60_r8_e4.wrld
+@sleep 2
 
 python -OO %CONTROLLER% %KNOPPIX% 17676 
 rem >log_knoppix 2>log_knoppix_err
+pause

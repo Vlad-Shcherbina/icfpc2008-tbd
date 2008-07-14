@@ -181,7 +181,10 @@ class Connection(Thread):
 		"""
 		try:
 			self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
-			self.socket.setsockopt(socket.SOL_SOCKET, socket.TCP_NODELAY, 1)
+			try: self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+			except:
+				print "setsockopt failed!!!"
+				pass
 			self.socket.setblocking(1)
 			self.socket.connect(self.conparams)
 			

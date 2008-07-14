@@ -1,14 +1,13 @@
 #!/usr/bin/python
 
-#import psyco
-#psyco.full()
+import psyco
+psyco.full()
 
 from misc import *
 from controller import connection,cerebellum,visualize,mainLoop,staticMap
 from static_map import StaticMap
 from predictor import *
-from neuroactivity import drunkygohome, drunky_vis
-#from neuroactivity.drunkygohome import *
+from neuroactivity import drunkygohome
 ##############
 
 cerebellum.registerMessageHandler(TestHandler())
@@ -29,6 +28,7 @@ cerebellum.registerMessageHandler(pred)
 
 if visualize:
 	from visualizer import *
+	from neuroactivity import drunky_vis
 
 	vis = Visualizer(cerebellum, staticMap)
 
