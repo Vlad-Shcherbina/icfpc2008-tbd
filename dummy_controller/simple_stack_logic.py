@@ -179,13 +179,9 @@ class SimpleStackLogic(object):
         self.checkReached(x1, y1)
         if len(self.targets) == 0: 
             return
-        try:
-            if  tele.moreMessagesWaiting:
-                print 'stack logic: skipping frame'
-                return
-        except AttributeError,e:
-            print "!!! --- " + str(tele)
-            print e
+        if  tele.moreMessagesWaiting:
+            print 'stack logic: skipping frame'
+            return
         curr_o, x2, y2 = self.targets[0]
         d_min = None  # distance to the nearest collision 
         obj = None    # collision-causing object 
@@ -217,7 +213,6 @@ class SimpleStackLogic(object):
                 staticObjects = getObjects(tree, x1, y1, next_x, next_y)
             n_coll_obj, n_d_min, n_ox_min, n_oy_min = calcCollision(x1, y1, next_x, next_y, staticObjects)
             if curr_o != n_coll_obj:
-                print 'DROP target'
                 self.dropNearestTarget()
                 self.dropRedunantTargets(x1, y1)
         
