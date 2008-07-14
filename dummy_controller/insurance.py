@@ -30,7 +30,7 @@ class Insurance(object):
         badness = self.traceBadness(self.predictedTrace)
         if badness>0:
             print "danger",badness
-            control = (-1,-control[1])
+            control = (-1,control[1])
         
         return control
 
