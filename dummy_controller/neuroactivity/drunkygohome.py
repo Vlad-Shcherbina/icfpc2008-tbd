@@ -16,7 +16,7 @@ class DrunkyGoHome(object):
 	
 	def processInitData(self, initData):
 		self.initData = initData
-		print initData.__dict__
+
 #	def runStart(self,runNumber):
 #		print "run %s started"%runNumber
 #	def processEvent(self,event):

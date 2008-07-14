@@ -27,6 +27,13 @@ class Cerebellum(object):
 		self.command = None
 		self.runInProgress = False
 		
+		self._turnControl = 0
+		self._forwardControl = 0
+		
+		self.x = 0.0
+		self.y = 0.0
+		self.dir = 0.0
+		
 
 	def registerMessageHandler(self,handler):
 		"""
@@ -41,26 +48,35 @@ class Cerebellum(object):
 		"""
 		self.handlers.append(handler)
 
-	def _cmd(self,command):
+	
+	def rawcmd(self, command):
 		self.connection.sendCommand(command)
-#		self.commandHistory.cmd(command)
-		
-	def setForwardControl(self,v):
+		statistics.commandSent(command)
+	
+	# forwardControl 
+	
+	def setForwardControl(self, v):
 		v = max(min(v,1),-1)
-		self._cmd("a;"*(v-self._forwardControl)+"b;"*(self._forwardControl-v))
+		self.rawcmd("a;"*(v-self._forwardControl)+"b;"*(self._forwardControl-v))
 		self._forwardControl = v
+		
 	def getForwardControl(self):
 		return self._forwardControl
-	forwardControl = property(getForwardControl,setForwardControl)
+	
+	forwardControl = property(getForwardControl, setForwardControl)
 
-	def setTurnControl(self,t):
+	# turnControl
+	def setTurnControl(self, t):
 		t = max(min(t,2),-2)
-		self._cmd("l;"*(t-self._turnControl)+"r;"*(self._turnControl-t))
+		self.rawcmd("l;"*(t-self._turnControl)+"r;"*(self._turnControl-t))
 		self._turnControl = t
+		
 	def getTurnControl(self):
 		return self._turnControl
+	
 	turnControl = property(getTurnControl,setTurnControl)
 
+	# hi-level cmd wrapper
 	def cmd(self,command):
 		for c in command:
 			if c=="a":
@@ -72,10 +88,13 @@ class Cerebellum(object):
 			elif c=="r":
 				self.turnControl -= 1
 
+	
+	# simple hi-level controller implementation
+	
 	def _rotateTo(self,x,y):
-		desiredDir=degrees(atan2(y-self.teles[-1].y,
-							     x-self.teles[-1].x))
-		dDir = subtractAngles(desiredDir,self.teles[-1].dir)
+		desiredDir=degrees(atan2(y-self.y,
+							     x-self.x))
+		dDir = subtractAngles(desiredDir, self.dir)
 
 		if dDir>15:
 			self.turnControl = 2
@@ -90,9 +109,11 @@ class Cerebellum(object):
 
 	def _moveTo(self,x,y):
 		self._rotateTo(x,y)
-		dirX = cos(radians(self.teles[-1].dir))
-		dirY = sin(radians(self.teles[-1].dir))
-		dot = dirX*(x-self.teles[-1].x)+dirY*(y-self.teles[-1].y)
+		dirX = cos(radians(self.dir))
+		dirY = sin(radians(self.dir))
+		
+		dot = dirX*(x-self.x)+dirY*(y-self.y)
+		
 		if dot>0:
 			self.forwardControl = choice([1]*8+[0]+[-1])
 		else:
@@ -142,8 +163,6 @@ class Cerebellum(object):
 	def runStart(self,runNumber):	
 		"""message handler"""
 		print "*"*20, "\nNew Run!\n", "*"*20
-		self.teles = []
-		self.numTeles = 0
 		self.commands = []
 		self._forwardControl = 0
 		self._turnControl = 0
@@ -157,24 +176,22 @@ class Cerebellum(object):
 
 	def processTelemetry(self,tele):
 		"""message handler"""
-
-		#kinda keepalive
-		self.connection.sendCommand(";")
-
+		
+		self.x = tele.x
+		self.y = tele.y
+		self.dir = tele.dir
+		
 		# control
-		if self.command!=None and len(self.teles)>=2:
+		if self.command!=None:
 			if self.command[0] == "rotateTo":
 				self._rotateTo(self.command[1],self.command[2])
 			elif self.command[0] == "moveTo":
 				self._moveTo(self.command[1],self.command[2])
+		else:
+			# keepalive
+			self.connection.sendCommand(";")
+			
 		
-		
-		self.teles.append(tele)
-		self.teles = self.teles[-3:] # keep last three tele's
-		# so teles[-1] is current tele,
-		#    teles[-2] is previous one and so on
-		
-		self.numTeles += 1
 
 	
 	

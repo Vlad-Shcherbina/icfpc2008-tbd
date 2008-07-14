@@ -27,8 +27,6 @@ def circle(x,y,r,segments=50):
 def base():
 	glColor3f(0,1,0)
 	circle(0,0,5)
-	for i in range(1,6):
-		circle(0,0,i)
 			
 def martian(martian):
 	glPushMatrix()

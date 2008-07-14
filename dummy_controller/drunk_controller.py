@@ -1,6 +1,7 @@
 #!/usr/bin/python
-import psyco
-psyco.full()
+
+#import psyco
+#psyco.full()
 
 from misc import *
 from controller import connection,cerebellum,visualize,mainLoop,staticMap
@@ -14,8 +15,9 @@ cerebellum.registerMessageHandler(TestHandler())
 staticMap = StaticMap()
 cerebellum.registerMessageHandler(staticMap)
 
-physicalValues = PhysicalValues()
-cerebellum.registerMessageHandler(physicalValues)
+# !!! 
+#physicalValues = PhysicalValues()
+#cerebellum.registerMessageHandler(physicalValues)
 
 
 cerebellum.registerMessageHandler(DrunkyGoHome(cerebellum, staticMap))
@@ -26,8 +28,9 @@ if visualize:
 	from visualizer import *
 
 	vis = Visualizer(cerebellum, staticMap)
-	
-	vis.registerDrawer(PredictorDrawer(cerebellum, physicalValues))
+
+# !!!	
+#	vis.registerDrawer(PredictorDrawer(cerebellum, physicalValues))
 	
 	vis.start()
 

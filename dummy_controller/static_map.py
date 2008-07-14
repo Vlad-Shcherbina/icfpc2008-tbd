@@ -177,6 +177,8 @@ class StaticMap(object):
 			if dist2 <= minDist*minDist:
 				return o
 		return None
+	
+	
 	def drawer(self):
 		from visualizer import *
 #		for obj in self.staticObjects:
