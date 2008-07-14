@@ -7,7 +7,8 @@ from misc import *
 from controller import connection,cerebellum,visualize,mainLoop,staticMap
 from static_map import StaticMap
 from predictor import *
-from neuroactivity.drunkygohome import DrunkyGoHome
+from neuroactivity import drunkygohome, drunky_vis
+#from neuroactivity.drunkygohome import *
 ##############
 
 cerebellum.registerMessageHandler(TestHandler())
@@ -15,12 +16,14 @@ cerebellum.registerMessageHandler(TestHandler())
 staticMap = StaticMap()
 cerebellum.registerMessageHandler(staticMap)
 
-# !!! 
-#physicalValues = PhysicalValues()
-#cerebellum.registerMessageHandler(physicalValues)
+physicalValues = PhysicalValues()
+cerebellum.registerMessageHandler(physicalValues)
 
+drunky = drunkygohome.DrunkyGoHome(cerebellum, physicalValues, staticMap)
+cerebellum.registerMessageHandler(drunky)
 
-cerebellum.registerMessageHandler(DrunkyGoHome(cerebellum, staticMap))
+pred = PredictionDrawer()
+cerebellum.registerMessageHandler(pred)
 
 #cerebellum.command = ("moveTo",0,0)
 
@@ -29,8 +32,9 @@ if visualize:
 
 	vis = Visualizer(cerebellum, staticMap)
 
-# !!!	
-#	vis.registerDrawer(PredictorDrawer(cerebellum, physicalValues))
+	vis.registerDrawer(pred)
+	
+	vis.registerDrawer(drunky_vis.createDrawer(drunky))
 	
 	vis.start()
 

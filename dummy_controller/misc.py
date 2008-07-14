@@ -80,3 +80,6 @@ def addMethod(*classes):
             setattr(c,m.__name__,m)
         return m
     return t
+
+def log(s):
+	print s

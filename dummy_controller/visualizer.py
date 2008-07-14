@@ -23,6 +23,12 @@ def circle(x,y,r,segments=50):
 		glVertex2f(x+r*cos(a),y+r*sin(a))
 	glEnd()
 
+def sector(x,y,r,sa,ea,segments=20):
+	glBegin(GL_LINE_LOOP)
+	for i in range(segments):
+		a = sa + (ea-sa)/segments*i
+		glVertex2f(x+r*cos(radians(a)),y+r*sin(radians(a)))
+	glEnd()
 				
 def base():
 	glColor3f(0,1,0)
