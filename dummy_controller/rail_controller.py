@@ -114,22 +114,32 @@ class Rail(object):
 				bestCost = cost
 				bestCmds = cmds
 		assert bestCmds is not None
-		print bestCost,bestCmds
+		#print "%6.2f, %s"%(bestCost,bestCmds)
 		
 		for cmd in bestCmds:
 			cmd.time -= smp.latency
 		self.pendingCommands = bestCmds
+		#print "pending commands",self.pendingCommands
 		
 		self.processPendingCommands()
-		#cerebellum.forwardControl = bestCmds[0].forwardControl
-		#cerebellum.turnControl = bestCmds[0].turnControl
+		
+#		print "="*20
+#		print "time: ",self.rover.localT
+#		smp.cleanup()
+#		print "smp queue",smp.controls
+#		print "Predictions:"
+#		print predict(self.rover,
+#						commands=[],
+#						interval=1)[-1]
+#		print " --"
+#		print serverMovementPredictor.predict(interval=1,rover=self.rover)[-1]
+#		print "="*20
+		
 		
 		#print "%.1f"%actualRover.distToTrace(self.trace)
 			
-	def commandSent(self,controlState):
-		pass
-	
 	def processPendingCommands(self):
+		#print "pending commands",self.pendingCommands
 		t = time.clock()
 		newCmds = []
 		for c in self.pendingCommands:
@@ -206,15 +216,15 @@ cerebellum.registerMessageHandler(rail)
 wpController = WayPointController(rail,moveTo)
 cerebellum.registerMessageHandler(wpController)		
 
-#pd = PredictionDrawer()
-#cerebellum.registerMessageHandler(pd)
+pd = PredictionDrawer()
+cerebellum.registerMessageHandler(pd)
 
 if visualize:
 	from visualizer import *
 	vis = Visualizer(cerebellum, staticMap, 
 					 keyboardHandler, wpController.mouseHandler)
 	
-	#vis.registerDrawer(pd)
+	vis.registerDrawer(pd)
 	
 	vis.registerDrawer(rail.draw)
 	vis.registerDrawer(wpController.draw)

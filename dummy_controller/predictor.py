@@ -7,7 +7,7 @@ from misc import *
 DEFAULT_DT = 0.15
 
 # TODO: replace it with estimate
-DEFAULT_LATENCY = 0.05
+DEFAULT_LATENCY = 0.2
 
 class PredictionDrawer(object):
 	
@@ -30,6 +30,14 @@ class PredictionDrawer(object):
 		for p in trace:
 			glVertex3f(p.x,p.y,1)
 		glEnd()
+		
+		trace = serverMovementPredictor.predict(interval=5,rover=self.rover)
+		glBegin(GL_LINES)
+		glColor3f(0,0,1)
+		for p in trace:
+			glVertex3f(p.x,p.y,1)
+		glEnd()
+
 
 
 class PhysicalValues(object):
@@ -128,7 +136,7 @@ class PhysicalValues(object):
             self.drag = self.abdSQ.x[2]
         elif self.adSQ.solve():
             self.accel = self.adSQ.x[0]
-            self.brake = 0
+            self.brake = 0.5*self.adSQ.x[0]
             self.drag = self.adSQ.x[1]
             
         self.typicalSpeed = max(0.5*self.maxSpeed,0.01)
@@ -174,13 +182,17 @@ class ServerMovementPredictor(object):
 		self.rover = None
 	
 	def commandSent(self,controlTuple):
-		t = time.clock()
-		#clean up sent commands
-		while len(self.controls)>0 and self.controls[0].time < t-self.latency:
-			self.controls.pop(0)
-			
+		self.cleanup()
 		self.controls.append(ControlRecord(controlTuple))
-		#print self.controls
+	#	print "smp: controls",self.controls
+
+	def cleanup(self):
+		#clean up outdated sent commands
+		t = time.clock()
+		reserve = 1 # to ensure that was processed
+		while len(self.controls)>0 and \
+			  self.controls[0].time < t-self.latency-reserve:
+			self.controls.pop(0)
 
 	def processTelemetry(self,tele):
 		self.rover = RoverState(tele,self.rover)
@@ -252,6 +264,12 @@ class RoverState(object):
                 physicalValues.typicalAccel+\
             abs(subtractAngles(self.dir,another.dir))/\
                 physicalValues.typicalRotSpeed
+    def __str__(self):
+    	return "RoverState(%.2f,%.2f,%s%s)@%.3f"%(
+			self.x,self.y,
+    		"b-a"[self.forwardControl+1],
+			"Rr-lL"[self.turnControl+2],
+			self.localT)
 
 def roverSimulationStep(rover,dt,commands=None,firstCommand=0):
     phys = physicalValues
