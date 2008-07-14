@@ -21,7 +21,7 @@ class Cerebellum(object):
 	"""
 	def __init__(self,connection):
 		self._connection = connection
-		self.stats = statistics.getStats()
+#		self.stats = statistics.getStats()
 		self.currentRun = 0
 		self.handlers = []
 		self.command = None
@@ -66,7 +66,7 @@ class Cerebellum(object):
 		
 		if cmd:
 			self._connection.sendCommand(cmd)
-			self.stats.commandSent(self._control)
+#			self.stats.commandSent(self._control)
 			self.dispatchToHandlers("commandSent", self._control)
 		else:
 			self._connection.sendCommand(";")
@@ -109,8 +109,8 @@ class Cerebellum(object):
 							     x-self.x))
 		dDir = subtractAngles(desiredDir, self.dir)
 		
-		turnThreshold = self.stats.maxTurn * 0.05 
-		hardTurnThreshold = self.stats.maxHardTurn * 0.15 
+		turnThreshold = self.initialData.maxTurn * 0.05 
+		hardTurnThreshold = self.initialData.maxHardTurn * 0.15 
 
 		if dDir > hardTurnThreshold:
 			self.turnControl = 2
@@ -236,15 +236,15 @@ class Cerebellum(object):
 			if not self.runInProgress:
 				self.runInProgress = True
 				self.runStart(self.currentRun)
-				self.stats.runStart(self.currentRun)
+#				self.stats.runStart(self.currentRun)
 				self.dispatchToHandlers("runStart", self.currentRun)
 			
 			self.processTelemetry(message)
-			self.stats.processTelemetry(message)
+#			self.stats.processTelemetry(message)
 			self.dispatchToHandlers("processTelemetry", message)
 
 		elif isinstance(message,Event):
-			self.stats.processEvent(message)
+#			self.stats.processEvent(message)
 			self.dispatchToHandlers("processEvent", message)
 			
 		elif isinstance(message,EndOfRun):
@@ -254,6 +254,6 @@ class Cerebellum(object):
 			
 		if isinstance(message, InitData):
 			self.processInitData(message)
-			self.stats.processInitData(message)
+#			self.stats.processInitData(message)
 			self.dispatchToHandlers("processInitData", message)
 					
