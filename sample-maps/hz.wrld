@@ -1,6 +1,6 @@
 {
-    "size" : 50,
-    "timeLimit" : 30000,
+    "size" : 100,
+    "timeLimit" : 60000,
     "vehicleParams" : {
         "maxSpeed" : 20,
         "accel" : 2,
@@ -8,7 +8,7 @@
         "turn" : 20,
         "hardTurn" : 60,
         "frontView" : 60,
-	"rotAccel" : 120,
+		"rotAccel" : 120,
         "rearView" : 30
       },
     "martianParams" : {
@@ -26,16 +26,19 @@
             "x" : 10,
             "y" : 10,
             "r" : 6
-          }
+          }      
+      ],
+    "boulders" : [
       ],
     "runs" : [
         {
             "vehicle" : {
                 "x" : 20,
-                "y" : 0,
-                "dir" : o
+                "y" : 10,
+                "dir" : 0
               },
             "enemies" : [
+
               ]
           }
       ]
