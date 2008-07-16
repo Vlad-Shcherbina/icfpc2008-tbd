@@ -55,7 +55,7 @@ class Map(object):
         return "map size %s"%self.size
         
     def draw(self):
-        glDisable(djpmGL_TEXTURE_2D)
+        glDisable(GL_TEXTURE_2D)
         glColor3f(0.6,0.2,0)
         glBegin(GL_QUADS)
         drawTexRect(-0.5*self.size,-0.5*self.size,0.5*self.size,0.5*self.size)
